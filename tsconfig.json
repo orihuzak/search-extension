@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "outDir": "./built",
+    "noImplicitAny": true,
+    "allowJs": true,
+    "module": "commonjs",
+    "target": "esnext"
+  },
+  "include":[
+    "./src/**/*"
+  ]
+}

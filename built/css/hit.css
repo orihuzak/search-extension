@@ -1,0 +1,8 @@
+.wrapper {
+  display: flex;
+  border-bottom: 1px solid #555;
+}
+
+.wrapper:hover {
+  opacity: .8;
+}

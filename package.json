@@ -1,0 +1,21 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "main": "popup.ts",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@types/chrome": "^0.0.83",
+    "ts-loader": "^5.4.3",
+    "typescript": "^3.4.5",
+    "webpack": "^4.30.0",
+    "webpack-cli": "^3.3.1"
+  },
+  "dependencies": {
+    "@types/fuse": "^2.6.0",
+    "fuse.js": "^3.4.4"
+  },
+  "scripts": {
+    "build": "webpack --watch --config webpack.config.js"
+  }
+}
