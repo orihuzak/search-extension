@@ -115,6 +115,7 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const log = console.log;
 class Hit extends HTMLElement {
     constructor() {
         super();
@@ -131,7 +132,7 @@ class Hit extends HTMLElement {
         dataWrapper.appendChild(this.url);
         wrapper.appendChild(this.icon);
         wrapper.appendChild(dataWrapper);
-        wrapper.addEventListener('click', this.clicked);
+        wrapper.addEventListener('click', this.clicked.bind(this));
         // style
         const style = document.createElement('style');
         style.textContent = "@import url('css/hit.css');";
@@ -148,13 +149,13 @@ class Hit extends HTMLElement {
     setContents(item) {
         // itemの基本情報の設定
         this.itemID = item.id;
-        this.type = typeof item;
         if ('active' in item)
             this.type = 'tab';
         else if ('lastVisitTime' in item)
             this.type = 'history';
         else if ('dateAdded' in item)
             this.type = 'bookmark';
+        log(this.type);
         // hitに表示するものを設定
         this.name.innerText = item.title;
         this.url.innerText = decodeURI(item.url);
@@ -166,7 +167,24 @@ class Hit extends HTMLElement {
         else if (this.type === 'history')
             this.icon.src = './history.png';
     }
+    /** hitがクリックされたら発動します */
     clicked() {
+        log(this.itemID, this.type);
+        if (this.type === 'tab') {
+            chrome.tabs.update(this.itemID, { active: true }, tab => {
+                chrome.windows.update(tab.windowId, { focused: true });
+            });
+        }
+        else if (this.type === 'bookmark') {
+            this.openTab();
+        }
+        else if (this.type === 'history') {
+            this.openTab();
+        }
+    }
+    /** 新しいタブで開く */
+    openTab() {
+        chrome.tabs.create({ url: this.url.innerText });
     }
 }
 exports.default = Hit;
@@ -213,7 +231,6 @@ class SuggestView extends HTMLElement {
      * @param {*} list array of object
      */
     update(list) {
-        log(list);
         list.forEach(item => {
             const newHit = this.hit.cloneNode();
             newHit.setContents(item);
@@ -225,7 +242,6 @@ class SuggestView extends HTMLElement {
      * @param {*} list
      */
     updateResult(list) {
-        log(list);
         list.forEach(item => {
             log(item.item.constructor.name);
             const newHit = this.hit.cloneNode(true);

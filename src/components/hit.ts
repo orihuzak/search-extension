@@ -1,10 +1,11 @@
 import { Tab, HistoryItem, BookmarkTreeNode } from '../chrome-type'
+const log = console.log
 export default class Hit extends HTMLElement {
   private shadow: ShadowRoot
   private name: HTMLDivElement
   private url: HTMLDivElement
   private icon: HTMLImageElement
-  private itemID: string | number
+  private itemID: number
   private type: string
 
   constructor () {
@@ -22,7 +23,7 @@ export default class Hit extends HTMLElement {
     dataWrapper.appendChild(this.url)
     wrapper.appendChild(this.icon)
     wrapper.appendChild(dataWrapper)
-    wrapper.addEventListener('click', this.clicked)
+    wrapper.addEventListener('click', this.clicked.bind(this))
     // style
     const style = document.createElement('style')
     style.textContent = "@import url('css/hit.css');"
@@ -40,10 +41,10 @@ export default class Hit extends HTMLElement {
   public setContents(item: any) {
     // itemの基本情報の設定
     this.itemID = item.id
-    this.type = typeof item
     if('active' in item) this.type = 'tab'
     else if('lastVisitTime' in item) this.type = 'history'
     else if('dateAdded' in item) this.type = 'bookmark'
+    log(this.type)
     // hitに表示するものを設定
     this.name.innerText = item.title
     this.url.innerText = decodeURI(item.url)
@@ -53,8 +54,24 @@ export default class Hit extends HTMLElement {
     else if (this.type === 'history') this.icon.src = './history.png'
   }
 
+  /** hitがクリックされたら発動します */
   private clicked() {
+    log(this.itemID, this.type)
+    if (this.type === 'tab') {
+      chrome.tabs.update(this.itemID, {active: true}, tab => {
+        chrome.windows.update(tab.windowId, {focused: true})
+      })
+    } else if (this.type === 'bookmark') {
+      this.openTab()
+    } else if (this.type === 'history') {
+      this.openTab()
+    }
 
+  }
+
+  /** 新しいタブで開く */
+  public openTab() {
+    chrome.tabs.create({url: this.url.innerText})
   }
 }
 

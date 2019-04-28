@@ -25,6 +25,8 @@ export default class SuggestView extends HTMLElement {
     const style = document.createElement('style')
     style.textContent = "@import url('css/hits.css');"
     this.root.appendChild(style)
+
+    
    
     window.onload = () => {
     }
@@ -35,7 +37,6 @@ export default class SuggestView extends HTMLElement {
    * @param {*} list array of object
    */
   public update(list: Tab[]){
-    log(list)
     list.forEach( item => {
       const newHit = <Hit>this.hit.cloneNode()
       newHit.setContents(item)
@@ -48,7 +49,6 @@ export default class SuggestView extends HTMLElement {
    * @param {*} list 
    */
   public updateResult(list: any[]) {
-    log(list)
     list.forEach( item => {
       log(item.item.constructor.name)
       const newHit = <Hit>this.hit.cloneNode(true)
