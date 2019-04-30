@@ -4,6 +4,13 @@
   border-bottom: 1px solid #555;
 }
 
+.wrapper-focused {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #555;
+  background-color: aqua;
+}
+
 .wrapper:hover {
   opacity: .8;
 }

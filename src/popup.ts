@@ -2,12 +2,13 @@ import * as Fuse from 'fuse.js'
 import { FuseResult, FuseOptions } from 'fuse.js'
 import SuggestView from './components/suggest-view'
 import { Tab, HistoryItem, BookmarkTreeNode, Item } from './chrome-type'
-const log = console.log
+import Hit from './components/hit'
 const searchbox: HTMLInputElement = <HTMLInputElement>document.getElementById('searchbox')
 const view = new SuggestView()
 document.body.appendChild(view)
 let userInput = ''
 let timerID: number
+const log = console.log
 
 /**
  * fuzzy search option
@@ -99,6 +100,15 @@ window.onload = () => {
   // タブを描画
   showAllTabs()
 }
+
+window.addEventListener('keydown', (e) => {
+  log(e.key)
+  if(e.key === 'Tab') view.focusDown()
+  else if(e.key === 'Enter') view.open()
+  else if (e.key === 'ArrowDown') view.focusDown()
+  else if (e.key === 'ArrowUp') view.focusUp()
+
+})
 
 /**
  * 検索ボックスに入力されたら検索する

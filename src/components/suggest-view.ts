@@ -26,8 +26,6 @@ export default class SuggestView extends HTMLElement {
     style.textContent = "@import url('css/hits.css');"
     this.root.appendChild(style)
 
-    
-   
     window.onload = () => {
     }
   }
@@ -64,6 +62,54 @@ export default class SuggestView extends HTMLElement {
     while(this.view.firstChild) {
       this.view.removeChild(this.view.firstChild)
     }
+  }
+
+  /**
+   * move focus
+   * 不必要に複雑な感じがある・・・
+   * @param direction if true move down, false move up
+   */
+  private switchFocus(direction: boolean = true) {
+    const hits = <Hit[]>[...this.view.children]
+    let focusedIndex: number = null
+    for(let i = 0; i < hits.length; i++) {
+      if(hits[i].focused) focusedIndex = i
+    }
+    // フォーカスがない場合は、最初の要素にフォーカス
+    if (focusedIndex === null) {
+      hits[direction ? 0 : hits.length-1].update({focused: true})
+    } else if (focusedIndex === 0) {
+      // down 最初にフォーカスが当たっている場合、次の要素
+      // up 最後の要素
+      hits[0].update({focused: false})
+      hits[direction ? focusedIndex + 1 : hits.length-1].update({focused:true})
+    // フォーカスが0 < x < lastに当たっているなら次の要素にフォーカス
+    } else if(0 < focusedIndex && focusedIndex < hits.length - 1 ) {
+      hits[focusedIndex].update({focused: false})
+      hits[direction ? focusedIndex + 1 : focusedIndex - 1].update({focused: true})
+    // down: 最後の要素にフォーカスが当たっていれば、最初の要素にフォーカス
+    // up: 最後から2番目の要素にフォーカス
+    } else if (focusedIndex === hits.length - 1) {
+      hits[focusedIndex].update({focused: false})
+      hits[direction ? 0 : focusedIndex - 1].update({focused: true}) 
+    }
+  }
+
+  public focusDown() {
+    this.switchFocus(true)
+  }
+
+  public focusUp() {
+    this.switchFocus(false)
+  }
+
+  public open(){
+    const hits = <Hit[]>[...this.view.children]
+    hits.forEach( hit => {
+      if(hit.focused) {
+        hit.openPage()
+      }
+    })
   }
 }
 

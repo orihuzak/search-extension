@@ -120,8 +120,8 @@ class Hit extends HTMLElement {
     constructor() {
         super();
         this.shadow = this.attachShadow({ mode: 'open' });
-        const wrapper = document.createElement('div');
-        wrapper.className = 'wrapper';
+        this.wrapper = document.createElement('div');
+        this.wrapper.className = 'wrapper';
         this.icon = document.createElement('img');
         this.icon.width = 20;
         this.icon.height = 20;
@@ -130,15 +130,15 @@ class Hit extends HTMLElement {
         const dataWrapper = document.createElement('div');
         dataWrapper.appendChild(this.name);
         dataWrapper.appendChild(this.url);
-        wrapper.appendChild(this.icon);
-        wrapper.appendChild(dataWrapper);
-        wrapper.addEventListener('click', this.clicked.bind(this));
+        this.wrapper.appendChild(this.icon);
+        this.wrapper.appendChild(dataWrapper);
+        this.wrapper.addEventListener('click', this.openPage.bind(this));
         // style
         const style = document.createElement('style');
         style.textContent = "@import url('css/hit.css');";
         // shadow domに追加
         this.shadow.appendChild(style);
-        this.shadow.appendChild(wrapper);
+        this.shadow.appendChild(this.wrapper);
     }
     /**
      * ヒットにタイトルとURLとアイコンURLを設定する
@@ -155,7 +155,6 @@ class Hit extends HTMLElement {
             this.type = 'history';
         else if ('dateAdded' in item)
             this.type = 'bookmark';
-        log(this.type);
         // hitに表示するものを設定
         this.name.innerText = item.title;
         this.url.innerText = decodeURI(item.url);
@@ -163,13 +162,13 @@ class Hit extends HTMLElement {
         if (this.type === 'tab')
             this.icon.src = item.favIconUrl;
         else if (this.type === 'bookmark')
-            this.icon.src = './bookmark.png';
+            this.icon.src = './img/bookmark.png';
         else if (this.type === 'history')
-            this.icon.src = './history.png';
+            this.icon.src = './img/history.png';
     }
     /** hitがクリックされたら発動します */
-    clicked() {
-        log(this.itemID, this.type);
+    openPage() {
+        log('開くよ');
         if (this.type === 'tab') {
             chrome.tabs.update(this.itemID, { active: true }, tab => {
                 chrome.windows.update(tab.windowId, { focused: true });
@@ -185,6 +184,21 @@ class Hit extends HTMLElement {
     /** 新しいタブで開く */
     openTab() {
         chrome.tabs.create({ url: this.url.innerText });
+    }
+    /** hitの状態を更新する */
+    update(option = { focused: false }) {
+        if (this.focused !== option.focused) {
+            this.focused = option.focused;
+        }
+        this.updateStyle();
+    }
+    updateStyle() {
+        if (this.focused) {
+            this.wrapper.className += '-focused';
+        }
+        else {
+            this.wrapper.className = 'wrapper';
+        }
     }
 }
 exports.default = Hit;
@@ -257,6 +271,54 @@ class SuggestView extends HTMLElement {
             this.view.removeChild(this.view.firstChild);
         }
     }
+    /**
+     * move focus
+     * 不必要に複雑な感じがある・・・
+     * @param direction if true move down, false move up
+     */
+    switchFocus(direction = true) {
+        const hits = [...this.view.children];
+        let focusedIndex = null;
+        for (let i = 0; i < hits.length; i++) {
+            if (hits[i].focused)
+                focusedIndex = i;
+        }
+        // フォーカスがない場合は、最初の要素にフォーカス
+        if (focusedIndex === null) {
+            hits[direction ? 0 : hits.length - 1].update({ focused: true });
+        }
+        else if (focusedIndex === 0) {
+            // down 最初にフォーカスが当たっている場合、次の要素
+            // up 最後の要素
+            hits[0].update({ focused: false });
+            hits[direction ? focusedIndex + 1 : hits.length - 1].update({ focused: true });
+            // フォーカスが0 < x < lastに当たっているなら次の要素にフォーカス
+        }
+        else if (0 < focusedIndex && focusedIndex < hits.length - 1) {
+            hits[focusedIndex].update({ focused: false });
+            hits[direction ? focusedIndex + 1 : focusedIndex - 1].update({ focused: true });
+            // down: 最後の要素にフォーカスが当たっていれば、最初の要素にフォーカス
+            // up: 最後から2番目の要素にフォーカス
+        }
+        else if (focusedIndex === hits.length - 1) {
+            hits[focusedIndex].update({ focused: false });
+            hits[direction ? 0 : focusedIndex - 1].update({ focused: true });
+        }
+    }
+    focusDown() {
+        this.switchFocus(true);
+    }
+    focusUp() {
+        this.switchFocus(false);
+    }
+    open() {
+        const hits = [...this.view.children];
+        hits.forEach(hit => {
+            if (hit.focused) {
+                hit.openPage();
+            }
+        });
+    }
 }
 exports.default = SuggestView;
 customElements.define('suggest-view', SuggestView);
@@ -276,12 +338,12 @@ customElements.define('suggest-view', SuggestView);
 Object.defineProperty(exports, "__esModule", { value: true });
 const Fuse = __webpack_require__(/*! fuse.js */ "./node_modules/fuse.js/dist/fuse.js");
 const suggest_view_1 = __webpack_require__(/*! ./components/suggest-view */ "./src/components/suggest-view.ts");
-const log = console.log;
 const searchbox = document.getElementById('searchbox');
 const view = new suggest_view_1.default();
 document.body.appendChild(view);
 let userInput = '';
 let timerID;
+const log = console.log;
 /**
  * fuzzy search option
  * sortは必要なのかなー
@@ -367,6 +429,17 @@ window.onload = () => {
     // タブを描画
     showAllTabs();
 };
+window.addEventListener('keydown', (e) => {
+    log(e.key);
+    if (e.key === 'Tab')
+        view.focusDown();
+    else if (e.key === 'Enter')
+        view.open();
+    else if (e.key === 'ArrowDown')
+        view.focusDown();
+    else if (e.key === 'ArrowUp')
+        view.focusUp();
+});
 /**
  * 検索ボックスに入力されたら検索する
  */

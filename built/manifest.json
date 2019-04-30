@@ -6,7 +6,7 @@
   "permissions": ["bookmarks", "history", "tabs"],
   "browser_action": {
     "default_popup": "popup.html",
-    "default_icon": "orihuzak-small.png"
+    "default_icon": "img/orihuzak-small.png"
   },
   "commands": {
     "_execute_browser_action": {
