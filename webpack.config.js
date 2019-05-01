@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   entry: './src/popup.ts',
-  mode: "development",
+  // mode: "development",
   devtool: 'cheap-module-source-map',
   resolve: {
     extensions: [ '.tsx', '.ts', '.js'],

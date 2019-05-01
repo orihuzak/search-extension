@@ -102,7 +102,6 @@ window.onload = () => {
 }
 
 window.addEventListener('keydown', (e) => {
-  log(e.key)
   if(e.key === 'Tab') view.focusDown()
   else if(e.key === 'Enter') view.open()
   else if (e.key === 'ArrowDown') view.focusDown()

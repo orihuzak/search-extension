@@ -1,4 +1,6 @@
 import { Tab, HistoryItem, BookmarkTreeNode } from '../chrome-type'
+import SuggestView from './suggest-view'
+
 const log = console.log
 export default class Hit extends HTMLElement {
   private shadow: ShadowRoot
@@ -21,8 +23,10 @@ export default class Hit extends HTMLElement {
     this.name = document.createElement('div')
     this.url = document.createElement('div')
     const dataWrapper = document.createElement('div')
+    dataWrapper.className = 'card__data'
     dataWrapper.appendChild(this.name)
     dataWrapper.appendChild(this.url)
+    // wrapperに追加
     this.wrapper.appendChild(this.icon)
     this.wrapper.appendChild(dataWrapper)
     this.wrapper.addEventListener('click', this.openPage.bind(this))
@@ -43,9 +47,16 @@ export default class Hit extends HTMLElement {
   public setContents(item: any) {
     // itemの基本情報の設定
     this.itemID = item.id
-    if('active' in item) this.type = 'tab'
-    else if('lastVisitTime' in item) this.type = 'history'
-    else if('dateAdded' in item) this.type = 'bookmark'
+    if('active' in item) {
+      this.type = 'tab'
+      // closeボタンを追加
+      const closeButton = document.createElement('button')
+      closeButton.className = 'card__close'
+      closeButton.innerText = '×'
+      closeButton.addEventListener('click', this.closeTab.bind(this))
+      this.wrapper.appendChild(closeButton)
+    } else if ('lastVisitTime' in item) this.type = 'history'
+    else if ('dateAdded' in item) this.type = 'bookmark'
     // hitに表示するものを設定
     this.name.innerText = item.title
     this.url.innerText = decodeURI(item.url)
@@ -57,7 +68,6 @@ export default class Hit extends HTMLElement {
 
   /** hitがクリックされたら発動します */
   public openPage() {
-    log('開くよ')
     if (this.type === 'tab') {
       chrome.tabs.update(this.itemID, {active: true}, tab => {
         chrome.windows.update(tab.windowId, {focused: true})
@@ -73,6 +83,14 @@ export default class Hit extends HTMLElement {
   /** 新しいタブで開く */
   public openTab() {
     chrome.tabs.create({url: this.url.innerText})
+  }
+
+  /**
+   * タブを閉じ、リストから自身を削除する
+   */
+  public closeTab() {
+    chrome.tabs.remove(this.itemID)
+    this.parentNode.removeChild(this)
   }
 
   /** hitの状態を更新する */

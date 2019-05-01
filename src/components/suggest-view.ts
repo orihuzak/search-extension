@@ -2,8 +2,6 @@ const log = console.log
 import { Tab, HistoryItem, BookmarkTreeNode } from '../chrome-type'
 import { FuseResult, FuseOptions } from 'fuse.js'
 import Hit from './hit'
-// このファイルからchrome apiは使えない
-// 使いたいときは引数でもらう
 /**
  * サジェスト用のviewクラス
  * 引数はidやclassをプロパティに持つobject
