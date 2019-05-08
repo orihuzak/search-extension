@@ -15,6 +15,22 @@
   background-color: #ddab21af; 
 }
 
+.wrapper-focused > .card__close {
+  visibility: visible;
+}
+.wrapper:hover > .card__close {
+  visibility: visible;
+}
+
 .card__close {
+  visibility: hidden;
   margin-left: auto;
+  background-color: #555555;
+  color: white;
+  border: none;
+}
+
+.card__close:hover {
+  visibility: visible;
+  color: red
 }

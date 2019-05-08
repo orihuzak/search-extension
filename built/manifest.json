@@ -1,6 +1,6 @@
 { 
-  "name": "Hello orihuzak",
-  "description": "base level extension",
+  "name": "search tabs bookmarks history",
+  "description": "search tabs bookmarks history",
   "version": "0.0.1",
   "manifest_version": 2,
   "permissions": ["bookmarks", "history", "tabs"],
@@ -8,13 +8,23 @@
     "default_popup": "popup.html",
     "default_icon": "img/orihuzak-small.png"
   },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
   "commands": {
     "_execute_browser_action": {
       "suggested_key": {
         "default": "Ctrl+Shift+F",
         "mac": "MacCtrl+Shift+F"
       },
-      "description": "Opens popup.html"
+      "description": "Open popup.html"
+    },
+    "close-tab": {
+      "suggested_key": {
+        "default": "Ctrl+D"
+      },
+      "description": "Close focused tab"
     }
   }
 }

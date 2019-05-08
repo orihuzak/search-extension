@@ -104,9 +104,14 @@ export default class SuggestView extends HTMLElement {
   public open(){
     const hits = <Hit[]>[...this.view.children]
     hits.forEach( hit => {
-      if(hit.focused) {
-        hit.openPage()
-      }
+      if(hit.focused) hit.openPage()
+    })
+  }
+  
+  public closeTab() {
+    const hits = <Hit[]>[...this.view.children]
+    hits.forEach( hit => {
+      if(hit.focused) hit.closeTab()
     })
   }
 }

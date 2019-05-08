@@ -3,29 +3,31 @@ import { FuseResult, FuseOptions } from 'fuse.js'
 import SuggestView from './components/suggest-view'
 import { Tab, HistoryItem, BookmarkTreeNode, Item } from './chrome-type'
 import Hit from './components/hit'
-const searchbox: HTMLInputElement = <HTMLInputElement>document.getElementById('searchbox')
+const searchbox = <HTMLInputElement>document.getElementById('searchbox')
+searchbox.className = 'searchbox'
 const view = new SuggestView()
 document.body.appendChild(view)
 let userInput = ''
 let timerID: number
+const bg = chrome.extension.getBackgroundPage()
+
 const log = console.log
 
 /**
  * fuzzy search option
- * sortは必要なのかなー
  */
 const option = {
   shouldSort: true,
   includeScore: true,
   includeMatches: true,
   minMatchCharLength: 1,
-  threshold: 0.6, // 0に近ければより厳しい
+  threshold: 0.35, // 0に近ければより厳しい
   maxPatternLength: 32,
   keys: [ 'title', 'url' ],
 }
 
 /**
- * tree構造を一次元のリストをつくる
+ * tree構造を一次元のリストにする
  */
 function treeToFlatList (tree: BookmarkTreeNode): BookmarkTreeNode[] {
   function loop(node: BookmarkTreeNode, 
@@ -125,3 +127,7 @@ searchbox.oninput = (e) => {
     userInput = searchbox.value
   }
 }
+
+chrome.commands.onCommand.addListener( cmd => {
+  if(cmd === 'close-tab') view.closeTab()
+})

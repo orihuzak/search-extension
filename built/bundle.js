@@ -156,7 +156,7 @@ class Hit extends HTMLElement {
             // closeボタンを追加
             const closeButton = document.createElement('button');
             closeButton.className = 'card__close';
-            closeButton.innerText = '×';
+            closeButton.innerText = `close`; // close: <shortcut>にしたい
             closeButton.addEventListener('click', this.closeTab.bind(this));
             this.wrapper.appendChild(closeButton);
         }
@@ -327,9 +327,15 @@ class SuggestView extends HTMLElement {
     open() {
         const hits = [...this.view.children];
         hits.forEach(hit => {
-            if (hit.focused) {
+            if (hit.focused)
                 hit.openPage();
-            }
+        });
+    }
+    closeTab() {
+        const hits = [...this.view.children];
+        hits.forEach(hit => {
+            if (hit.focused)
+                hit.closeTab();
         });
     }
 }
@@ -352,26 +358,27 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Fuse = __webpack_require__(/*! fuse.js */ "./node_modules/fuse.js/dist/fuse.js");
 const suggest_view_1 = __webpack_require__(/*! ./components/suggest-view */ "./src/components/suggest-view.ts");
 const searchbox = document.getElementById('searchbox');
+searchbox.className = 'searchbox';
 const view = new suggest_view_1.default();
 document.body.appendChild(view);
 let userInput = '';
 let timerID;
+const bg = chrome.extension.getBackgroundPage();
 const log = console.log;
 /**
  * fuzzy search option
- * sortは必要なのかなー
  */
 const option = {
     shouldSort: true,
     includeScore: true,
     includeMatches: true,
     minMatchCharLength: 1,
-    threshold: 0.6,
+    threshold: 0.35,
     maxPatternLength: 32,
     keys: ['title', 'url'],
 };
 /**
- * tree構造を一次元のリストをつくる
+ * tree構造を一次元のリストにする
  */
 function treeToFlatList(tree) {
     function loop(node, result) {
@@ -469,6 +476,10 @@ searchbox.oninput = (e) => {
         userInput = searchbox.value;
     }
 };
+chrome.commands.onCommand.addListener(cmd => {
+    if (cmd === 'close-tab')
+        view.closeTab();
+});
 
 
 /***/ })
