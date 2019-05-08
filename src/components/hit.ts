@@ -4,12 +4,12 @@ import SuggestView from './suggest-view'
 const log = console.log
 export default class Hit extends HTMLElement {
   private shadow: ShadowRoot
+  private itemID: number
+  private type: string
   private wrapper: HTMLDivElement
   private name: HTMLDivElement
   private url: HTMLDivElement
   private icon: HTMLImageElement
-  private itemID: number
-  private type: string
   public focused: boolean  // フォーカスが当たっているかどうか
 
   constructor () {
@@ -52,7 +52,7 @@ export default class Hit extends HTMLElement {
       // closeボタンを追加
       const closeButton = document.createElement('button')
       closeButton.className = 'card__close'
-      closeButton.innerText = '×'
+      closeButton.innerText = `close` // close: <shortcut>にしたい
       closeButton.addEventListener('click', this.closeTab.bind(this))
       this.wrapper.appendChild(closeButton)
     } else if ('lastVisitTime' in item) this.type = 'history'
