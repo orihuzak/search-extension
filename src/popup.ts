@@ -9,8 +9,6 @@ const view = new SuggestView()
 document.body.appendChild(view)
 let userInput = ''
 let timerID: number
-const bg = chrome.extension.getBackgroundPage()
-
 const log = console.log
 
 /**
@@ -49,7 +47,7 @@ function treeToFlatList (tree: BookmarkTreeNode): BookmarkTreeNode[] {
  * すべてのタブを表示
  */
 function showAllTabs() {
-  return chrome.tabs.query({}, results => view.update(results))
+  return chrome.tabs.query({}, results => view.showTabs(results))
 }
 
 function search(text: string) {
@@ -63,7 +61,7 @@ function search(text: string) {
         candidates = deduplicate(candidates, bookmarks)
         const fuse = new Fuse(candidates, option)
         const result = fuse.search(text)
-        view.updateResult(result) // わからない
+        view.updateView(result) // わからない
       })
     })
   })
@@ -103,10 +101,11 @@ window.onload = () => {
   showAllTabs()
 }
 
-window.addEventListener('keydown', (e) => {
+window.addEventListener('keydown', (e: KeyboardEvent) => {
   if(e.key === 'Tab') view.focusDown()
-  else if(e.key === 'Enter') view.open()
-  else if (e.key === 'ArrowDown') view.focusDown()
+  else if(e.key === 'Enter') {
+    const r = view.open()
+  } else if (e.key === 'ArrowDown') view.focusDown()
   else if (e.key === 'ArrowUp') view.focusUp()
 
 })
@@ -114,7 +113,7 @@ window.addEventListener('keydown', (e) => {
 /**
  * 検索ボックスに入力されたら検索する
  */
-searchbox.oninput = (e) => {
+searchbox.oninput = (e: InputEvent) => {
   if (userInput !== searchbox.value) { // 入力によって値が変わった場合
     if (searchbox.value === ''){ // 空ならタブを表示
       view.clear()
@@ -128,6 +127,20 @@ searchbox.oninput = (e) => {
   }
 }
 
+/**
+ * searchboxのkeyboard event
+ */
+searchbox.onkeydown = (e: any) => {
+  if (!e.isComposing) {
+    if (e.key === 'Enter') {
+      chrome.tabs.create({url: `https://www.google.com/search?q=${searchbox.value}`})
+    }
+  }
+}
+
+/**
+ * extension用のコマンドのevent listener
+ */
 chrome.commands.onCommand.addListener( cmd => {
   if(cmd === 'close-tab') view.closeTab()
 })

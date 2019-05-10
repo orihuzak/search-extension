@@ -1,12 +1,13 @@
 body {
+  /* width: 400px; */
   color: #fff;
   background-color: #121212;
 }
 
 suggest-view {
-  width: auto;
+  /* width: auto; */
 }
 
 .searchbox {
-  width: auto;
+  width: 100%;
 }

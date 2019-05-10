@@ -13,11 +13,15 @@ export default class SuggestView extends HTMLElement {
 
   constructor() {
     super()
+    // shadow root
     this.root = this.attachShadow({mode:'open'})
+    
     // リストを表示するビュー
     this.view = document.createElement('ul')
-    this.hit = new Hit()
     this.root.appendChild(this.view)
+    
+    // cloneの元になるhit
+    this.hit = new Hit()
     
     // style
     const style = document.createElement('style')
@@ -29,13 +33,12 @@ export default class SuggestView extends HTMLElement {
   }
 
   /**
-   * ビューを再描画
-   * @param {*} list array of object
+   * show only tabs on view
+   * @param tabs Array of Tab
    */
-  public update(list: Tab[]){
-    list.forEach( item => {
-      const newHit = <Hit>this.hit.cloneNode()
-      newHit.setContents(item)
+  public showTabs(tabs: Tab[]){
+    tabs.forEach( tab => {
+      const newHit = this.makeNewHit(tab)
       this.view.appendChild(newHit)
     })
   }
@@ -44,13 +47,18 @@ export default class SuggestView extends HTMLElement {
    * 検索結果を再描画
    * @param {*} list 
    */
-  public updateResult(list: any[]) {
+  public updateView(list: any[]) {
     list.forEach( item => {
-      log(item.item.constructor.name)
-      const newHit = <Hit>this.hit.cloneNode(true)
-      newHit.setContents(item.item)
+      const newHit = this.makeNewHit(item.item)
       this.view.appendChild(newHit)
     })
+  }
+
+  /** 新しいHitをつくって返す */
+  private makeNewHit(item: Tab|BookmarkTreeNode|HistoryItem) {
+    const newHit = <Hit>this.hit.cloneNode(true)
+    newHit.setContents(item)
+    return newHit
   }
 
   /**
@@ -68,7 +76,7 @@ export default class SuggestView extends HTMLElement {
    * @param direction if true move down, false move up
    */
   private switchFocus(direction: boolean = true) {
-    const hits = <Hit[]>[...this.view.children]
+    const hits = this.getHits()
     let focusedIndex: number = null
     for(let i = 0; i < hits.length; i++) {
       if(hits[i].focused) focusedIndex = i
@@ -101,18 +109,33 @@ export default class SuggestView extends HTMLElement {
     this.switchFocus(false)
   }
 
-  public open(){
-    const hits = <Hit[]>[...this.view.children]
+  /**
+   * open an url of a focused hit
+   * if open an url return true, if not return false
+   */
+  public open() {
+    const hits = this.getHits()
     hits.forEach( hit => {
-      if(hit.focused) hit.openPage()
+      if(hit.focused) {
+        hit.openPage()
+        return true
+      }
     })
+    return false
   }
   
   public closeTab() {
-    const hits = <Hit[]>[...this.view.children]
+    const hits = this.getHits()
     hits.forEach( hit => {
       if(hit.focused) hit.closeTab()
     })
+  }
+
+  /**
+   * viewのchild elementをすべて取得する
+   */
+  public getHits(): Hit[] {
+    return <Hit[]>[...this.view.children]
   }
 }
 

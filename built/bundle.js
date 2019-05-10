@@ -241,11 +241,13 @@ const hit_1 = __webpack_require__(/*! ./hit */ "./src/components/hit.ts");
 class SuggestView extends HTMLElement {
     constructor() {
         super();
+        // shadow root
         this.root = this.attachShadow({ mode: 'open' });
         // リストを表示するビュー
         this.view = document.createElement('ul');
-        this.hit = new hit_1.default();
         this.root.appendChild(this.view);
+        // cloneの元になるhit
+        this.hit = new hit_1.default();
         // style
         const style = document.createElement('style');
         style.textContent = "@import url('css/hits.css');";
@@ -254,13 +256,12 @@ class SuggestView extends HTMLElement {
         };
     }
     /**
-     * ビューを再描画
-     * @param {*} list array of object
+     * show only tabs on view
+     * @param tabs Array of Tab
      */
-    update(list) {
-        list.forEach(item => {
-            const newHit = this.hit.cloneNode();
-            newHit.setContents(item);
+    showTabs(tabs) {
+        tabs.forEach(tab => {
+            const newHit = this.makeNewHit(tab);
             this.view.appendChild(newHit);
         });
     }
@@ -268,13 +269,17 @@ class SuggestView extends HTMLElement {
      * 検索結果を再描画
      * @param {*} list
      */
-    updateResult(list) {
+    updateView(list) {
         list.forEach(item => {
-            log(item.item.constructor.name);
-            const newHit = this.hit.cloneNode(true);
-            newHit.setContents(item.item);
+            const newHit = this.makeNewHit(item.item);
             this.view.appendChild(newHit);
         });
+    }
+    /** 新しいHitをつくって返す */
+    makeNewHit(item) {
+        const newHit = this.hit.cloneNode(true);
+        newHit.setContents(item);
+        return newHit;
     }
     /**
      * ビューを初期化
@@ -290,7 +295,7 @@ class SuggestView extends HTMLElement {
      * @param direction if true move down, false move up
      */
     switchFocus(direction = true) {
-        const hits = [...this.view.children];
+        const hits = this.getHits();
         let focusedIndex = null;
         for (let i = 0; i < hits.length; i++) {
             if (hits[i].focused)
@@ -324,19 +329,32 @@ class SuggestView extends HTMLElement {
     focusUp() {
         this.switchFocus(false);
     }
+    /**
+     * open an url of a focused hit
+     * if open an url return true, if not return false
+     */
     open() {
-        const hits = [...this.view.children];
+        const hits = this.getHits();
         hits.forEach(hit => {
-            if (hit.focused)
+            if (hit.focused) {
                 hit.openPage();
+                return true;
+            }
         });
+        return false;
     }
     closeTab() {
-        const hits = [...this.view.children];
+        const hits = this.getHits();
         hits.forEach(hit => {
             if (hit.focused)
                 hit.closeTab();
         });
+    }
+    /**
+     * viewのchild elementをすべて取得する
+     */
+    getHits() {
+        return [...this.view.children];
     }
 }
 exports.default = SuggestView;
@@ -363,7 +381,6 @@ const view = new suggest_view_1.default();
 document.body.appendChild(view);
 let userInput = '';
 let timerID;
-const bg = chrome.extension.getBackgroundPage();
 const log = console.log;
 /**
  * fuzzy search option
@@ -399,7 +416,7 @@ function treeToFlatList(tree) {
  * すべてのタブを表示
  */
 function showAllTabs() {
-    return chrome.tabs.query({}, results => view.update(results));
+    return chrome.tabs.query({}, results => view.showTabs(results));
 }
 function search(text) {
     // tabs, history, bookmarksを取得する
@@ -412,7 +429,7 @@ function search(text) {
                 candidates = deduplicate(candidates, bookmarks);
                 const fuse = new Fuse(candidates, option);
                 const result = fuse.search(text);
-                view.updateResult(result); // わからない
+                view.updateView(result); // わからない
             });
         });
     });
@@ -452,8 +469,9 @@ window.onload = () => {
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Tab')
         view.focusDown();
-    else if (e.key === 'Enter')
-        view.open();
+    else if (e.key === 'Enter') {
+        const r = view.open();
+    }
     else if (e.key === 'ArrowDown')
         view.focusDown();
     else if (e.key === 'ArrowUp')
@@ -476,6 +494,19 @@ searchbox.oninput = (e) => {
         userInput = searchbox.value;
     }
 };
+/**
+ * searchboxのkeyboard event
+ */
+searchbox.onkeydown = (e) => {
+    if (!e.isComposing) {
+        if (e.key === 'Enter') {
+            chrome.tabs.create({ url: `https://www.google.com/search?q=${searchbox.value}` });
+        }
+    }
+};
+/**
+ * extension用のコマンドのevent listener
+ */
 chrome.commands.onCommand.addListener(cmd => {
     if (cmd === 'close-tab')
         view.closeTab();
