@@ -33,13 +33,14 @@ export default class SuggestView extends HTMLElement {
   }
 
   /**
-   * show only tabs on view
-   * @param tabs Array of Tab
+   * show all tabs
    */
-  public showTabs(tabs: Tab[]){
-    tabs.forEach( tab => {
-      const newHit = this.makeNewHit(tab)
-      this.view.appendChild(newHit)
+  public showAllTabs() {
+    chrome.tabs.query({}, tabs => {
+      tabs.forEach( (tab, i) => {
+        const newHit = this.makeNewHit(tab, i + 1)
+        this.view.appendChild(newHit)
+      })
     })
   }
 
@@ -48,16 +49,22 @@ export default class SuggestView extends HTMLElement {
    * @param {*} list 
    */
   public updateView(list: any[]) {
-    list.forEach( item => {
-      const newHit = this.makeNewHit(item.item)
+    list.forEach( (item, i) => {
+      const newHit = this.makeNewHit(item.item, i + 1)
       this.view.appendChild(newHit)
     })
   }
 
   /** 新しいHitをつくって返す */
-  private makeNewHit(item: Tab|BookmarkTreeNode|HistoryItem) {
+  private makeNewHit(item: Tab|BookmarkTreeNode|HistoryItem, tabIndex: number) {
     const newHit = <Hit>this.hit.cloneNode(true)
     newHit.setContents(item)
+    // tabIndexがある範囲にあるかどうかをチェックする
+    let i = Math.trunc(tabIndex) 
+    if (-1 <= i && i < 32767) {
+      newHit.tabIndex = i // hitにtabIndexを定義
+    }
+    
     return newHit
   }
 
@@ -111,17 +118,14 @@ export default class SuggestView extends HTMLElement {
 
   /**
    * open an url of a focused hit
-   * if open an url return true, if not return false
    */
   public open() {
     const hits = this.getHits()
     hits.forEach( hit => {
       if(hit.focused) {
         hit.openPage()
-        return true
       }
     })
-    return false
   }
   
   public closeTab() {

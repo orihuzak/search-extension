@@ -93,10 +93,19 @@ export default class Hit extends HTMLElement {
     this.parentNode.removeChild(this)
   }
 
-  /** hitの状態を更新する */
+  /**
+   * hitの状態を更新する
+   */
   public update(option: {focused: boolean} = {focused: false}) {
     if(this.focused !== option.focused) {
       this.focused = option.focused
+      // focusされたらscrollする
+      if (this.focused) {
+        this.scrollIntoView({
+          behavior: "smooth",
+          block: "end"
+        })
+      }
     }
     this.updateStyle()
   }

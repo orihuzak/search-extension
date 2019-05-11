@@ -3,8 +3,41 @@ import { FuseResult, FuseOptions } from 'fuse.js'
 import SuggestView from './components/suggest-view'
 import { Tab, HistoryItem, BookmarkTreeNode, Item } from './chrome-type'
 import Hit from './components/hit'
+
+
+// searchbox
 const searchbox = <HTMLInputElement>document.getElementById('searchbox')
 searchbox.className = 'searchbox'
+searchbox.autofocus = true
+/**
+ * 検索ボックスに入力されたら検索する
+ */
+searchbox.oninput = (e: InputEvent) => {
+  if (userInput !== searchbox.value) { // 入力によって値が変わった場合
+    if (searchbox.value === ''){ // 空ならタブを表示
+      view.clear()
+      view.showAllTabs()
+    } else {
+      view.clear()
+      window.clearTimeout(timerID)
+      timerID = window.setTimeout(search, 300, searchbox.value) // 0.3s
+    }
+    userInput = searchbox.value
+  }
+}
+
+/**
+ * searchboxのkeyboard event
+ */
+searchbox.onkeydown = (e: any) => {
+  if (!e.isComposing) {
+    if (e.key === 'Enter') {
+      chrome.tabs.create({url: `https://www.google.com/search?q=${searchbox.value}`})
+    }
+  }
+}
+
+// 検索結果の表示view
 const view = new SuggestView()
 document.body.appendChild(view)
 let userInput = ''
@@ -41,13 +74,6 @@ function treeToFlatList (tree: BookmarkTreeNode): BookmarkTreeNode[] {
     return result
   }
   return loop(tree, [])
-}
-
-/**
- * すべてのタブを表示
- */
-function showAllTabs() {
-  return chrome.tabs.query({}, results => view.showTabs(results))
 }
 
 function search(text: string) {
@@ -87,56 +113,28 @@ function deduplicate (arr1: Item[], arr2: Item[]) {
   return arr1
 }
 
-/**
- * スコアの高い順に並べ替える
- */
-function sort(){}
-
+// window events
 /**
  * popupが表示されたら実行される処理
  */
 window.onload = () => {
-  searchbox.focus()
-  // タブを描画
-  showAllTabs()
+  view.showAllTabs()
 }
 
 window.addEventListener('keydown', (e: KeyboardEvent) => {
-  if(e.key === 'Tab') view.focusDown()
-  else if(e.key === 'Enter') {
-    const r = view.open()
-  } else if (e.key === 'ArrowDown') view.focusDown()
-  else if (e.key === 'ArrowUp') view.focusUp()
-
+  if(e.key === 'Tab') {
+    if (searchbox === document.activeElement) searchbox.blur()
+    view.focusDown()
+  } else if(e.key === 'Enter') {
+    view.open()
+  } else if (e.key === 'ArrowDown') {
+    if (searchbox === document.activeElement) searchbox.blur()
+    view.focusDown()
+  } else if (e.key === 'ArrowUp') {
+    if (searchbox === document.activeElement) searchbox.blur()
+    view.focusUp()
+  }
 })
-
-/**
- * 検索ボックスに入力されたら検索する
- */
-searchbox.oninput = (e: InputEvent) => {
-  if (userInput !== searchbox.value) { // 入力によって値が変わった場合
-    if (searchbox.value === ''){ // 空ならタブを表示
-      view.clear()
-      showAllTabs()
-    } else {
-      view.clear()
-      window.clearTimeout(timerID)
-      timerID = window.setTimeout(search, 300, searchbox.value) // 0.3s
-    }
-    userInput = searchbox.value
-  }
-}
-
-/**
- * searchboxのkeyboard event
- */
-searchbox.onkeydown = (e: any) => {
-  if (!e.isComposing) {
-    if (e.key === 'Enter') {
-      chrome.tabs.create({url: `https://www.google.com/search?q=${searchbox.value}`})
-    }
-  }
-}
 
 /**
  * extension用のコマンドのevent listener

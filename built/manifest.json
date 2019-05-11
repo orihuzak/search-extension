@@ -8,10 +8,6 @@
     "default_popup": "popup.html",
     "default_icon": "img/orihuzak-small.png"
   },
-  "background": {
-    "scripts": ["background.js"],
-    "persistent": false
-  },
   "commands": {
     "_execute_browser_action": {
       "suggested_key": {
