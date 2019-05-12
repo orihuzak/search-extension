@@ -105,6 +105,32 @@
 
 /***/ }),
 
+/***/ "./src/chrome-type.ts":
+/*!****************************!*\
+  !*** ./src/chrome-type.ts ***!
+  \****************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function isTab(item) {
+    return item.active !== undefined;
+}
+exports.isTab = isTab;
+function isHistoryItem(item) {
+    return item.visitCount !== undefined;
+}
+exports.isHistoryItem = isHistoryItem;
+function isBookmarkTreeNode(item) {
+    return item.dateAdded !== undefined;
+}
+exports.isBookmarkTreeNode = isBookmarkTreeNode;
+
+
+/***/ }),
+
 /***/ "./src/components/hit.ts":
 /*!*******************************!*\
   !*** ./src/components/hit.ts ***!
@@ -115,6 +141,7 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const chrome_type_1 = __webpack_require__(/*! ../chrome-type */ "./src/chrome-type.ts");
 const log = console.log;
 class Hit extends HTMLElement {
     constructor() {
@@ -141,6 +168,11 @@ class Hit extends HTMLElement {
         // shadow domに追加
         this.shadow.appendChild(style);
         this.shadow.appendChild(this.wrapper);
+        this.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                this.openPage();
+            }
+        });
     }
     /**
      * ヒットにタイトルとURLとアイコンURLを設定する
@@ -150,9 +182,15 @@ class Hit extends HTMLElement {
      */
     setContents(item) {
         // itemの基本情報の設定
-        this.itemID = item.id;
-        if ('active' in item) {
+        // item.idがstringならnumberに変換
+        this.itemID = typeof item.id === 'string' ? parseInt(item.id) : item.id;
+        // hitに表示するものを設定
+        this.name.innerText = item.title;
+        this.url.innerText = decodeURI(item.url);
+        if (chrome_type_1.isTab(item)) {
             this.type = 'tab';
+            // set icon
+            this.icon.src = item.favIconUrl;
             // closeボタンを追加
             const closeButton = document.createElement('button');
             closeButton.className = 'card__close';
@@ -160,22 +198,19 @@ class Hit extends HTMLElement {
             closeButton.addEventListener('click', this.closeTab.bind(this));
             this.wrapper.appendChild(closeButton);
         }
-        else if ('lastVisitTime' in item)
+        else if (chrome_type_1.isHistoryItem(item)) {
             this.type = 'history';
-        else if ('dateAdded' in item)
+            this.icon.src = './img/history.png'; // set icon
+        }
+        else if (chrome_type_1.isBookmarkTreeNode(item)) {
             this.type = 'bookmark';
-        // hitに表示するものを設定
-        this.name.innerText = item.title;
-        this.url.innerText = decodeURI(item.url);
-        // iconの設定
-        if (this.type === 'tab')
-            this.icon.src = item.favIconUrl;
-        else if (this.type === 'bookmark')
-            this.icon.src = './img/bookmark.png';
-        else if (this.type === 'history')
-            this.icon.src = './img/history.png';
+            this.icon.src = './img/bookmark.png'; // set icon
+        }
     }
-    /** hitがクリックされたら発動します */
+    /**
+     * hitがクリックされたら発動します
+     * openTabとopenPageの違いわかりづらいので名前を改善する
+     **/
     openPage() {
         if (this.type === 'tab') {
             chrome.tabs.update(this.itemID, { active: true }, tab => {
@@ -197,32 +232,9 @@ class Hit extends HTMLElement {
      * タブを閉じ、リストから自身を削除する
      */
     closeTab() {
+        log(this.itemID);
         chrome.tabs.remove(this.itemID);
         this.parentNode.removeChild(this);
-    }
-    /**
-     * hitの状態を更新する
-     */
-    update(option = { focused: false }) {
-        if (this.focused !== option.focused) {
-            this.focused = option.focused;
-            // focusされたらscrollする
-            if (this.focused) {
-                this.scrollIntoView({
-                    behavior: "smooth",
-                    block: "end"
-                });
-            }
-        }
-        this.updateStyle();
-    }
-    updateStyle() {
-        if (this.focused) {
-            this.wrapper.className += '-focused';
-        }
-        else {
-            this.wrapper.className = 'wrapper';
-        }
     }
 }
 exports.default = Hit;
@@ -242,7 +254,21 @@ customElements.define('hit-view', Hit);
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const log = console.log;
+const utilities_1 = __webpack_require__(/*! ../utilities */ "./src/utilities.ts");
+const Fuse = __webpack_require__(/*! fuse.js */ "./node_modules/fuse.js/dist/fuse.js");
 const hit_1 = __webpack_require__(/*! ./hit */ "./src/components/hit.ts");
+/**
+ * fuzzy search option
+ */
+const option = {
+    shouldSort: true,
+    includeScore: true,
+    includeMatches: true,
+    minMatchCharLength: 1,
+    threshold: 0.35,
+    maxPatternLength: 32,
+    keys: ['title', 'url'],
+};
 /**
  * サジェスト用のviewクラス
  * 引数はidやclassをプロパティに持つobject
@@ -250,8 +276,42 @@ const hit_1 = __webpack_require__(/*! ./hit */ "./src/components/hit.ts");
 class SuggestView extends HTMLElement {
     constructor() {
         super();
+        this.userInput = '';
         // shadow root
         this.root = this.attachShadow({ mode: 'open' });
+        // searchbox
+        this.searchbox = document.createElement('input');
+        this.searchbox.className = 'searchbox';
+        this.searchbox.autofocus = true;
+        this.searchbox.tabIndex = 1;
+        /**
+         * 検索ボックスに入力されたら検索する
+         */
+        this.searchbox.oninput = (e) => {
+            log(this.searchbox.value);
+            if (this.userInput !== this.searchbox.value) { // 入力によって値が変わった場合
+                this.clear();
+                if (this.searchbox.value === '') { // 空ならタブを表示
+                    this.showAllTabs();
+                }
+                else {
+                    window.clearTimeout(this.timerID);
+                    this.timerID = window.setTimeout(this.search.bind(this), 300); // 0.3s
+                }
+                this.userInput = this.searchbox.value;
+            }
+        };
+        /**
+         * searchboxのkeyboard event
+         */
+        this.searchbox.onkeydown = (e) => {
+            if (!e.isComposing) {
+                if (e.key === 'Enter') {
+                    chrome.tabs.create({ url: `https://www.google.com/search?q=${this.searchbox.value}` });
+                }
+            }
+        };
+        this.root.appendChild(this.searchbox);
         // リストを表示するビュー
         this.view = document.createElement('ul');
         this.root.appendChild(this.view);
@@ -261,8 +321,34 @@ class SuggestView extends HTMLElement {
         const style = document.createElement('style');
         style.textContent = "@import url('css/hits.css');";
         this.root.appendChild(style);
+        // event
+        this.onkeydown = e => {
+            if (e.key === 'ArrowUp') {
+                this.moveFocusUp();
+            }
+            else if (e.key === 'ArrowDown') {
+                this.moveFocusDown();
+            }
+        };
+        // 描画時にやりたい処理
         window.onload = () => {
         };
+    }
+    search() {
+        // tabs, history, bookmarksを取得する
+        chrome.tabs.query({}, tabs => {
+            let candidates = tabs;
+            chrome.history.search({ text: '', maxResults: 20 }, history => {
+                candidates = utilities_1.deduplicate(candidates, history);
+                chrome.bookmarks.getTree(tree => {
+                    const bookmarks = utilities_1.treeToFlatList(tree[0]);
+                    candidates = utilities_1.deduplicate(candidates, bookmarks);
+                    const fuse = new Fuse(candidates, option);
+                    const result = fuse.search(this.searchbox.value);
+                    this.updateView(result);
+                });
+            });
+        });
     }
     /**
      * show all tabs
@@ -270,7 +356,7 @@ class SuggestView extends HTMLElement {
     showAllTabs() {
         chrome.tabs.query({}, tabs => {
             tabs.forEach((tab, i) => {
-                const newHit = this.makeNewHit(tab, i + 1);
+                const newHit = this.makeNewHit(tab, i + 2);
                 this.view.appendChild(newHit);
             });
         });
@@ -281,7 +367,7 @@ class SuggestView extends HTMLElement {
      */
     updateView(list) {
         list.forEach((item, i) => {
-            const newHit = this.makeNewHit(item.item, i + 1);
+            const newHit = this.makeNewHit(item.item, i + 2);
             this.view.appendChild(newHit);
         });
     }
@@ -305,60 +391,19 @@ class SuggestView extends HTMLElement {
         }
     }
     /**
-     * move focus
-     * 不必要に複雑な感じがある・・・
-     * @param direction if true move down, false move up
-     */
-    switchFocus(direction = true) {
-        const hits = this.getHits();
-        let focusedIndex = null;
-        for (let i = 0; i < hits.length; i++) {
-            if (hits[i].focused)
-                focusedIndex = i;
-        }
-        // フォーカスがない場合は、最初の要素にフォーカス
-        if (focusedIndex === null) {
-            hits[direction ? 0 : hits.length - 1].update({ focused: true });
-        }
-        else if (focusedIndex === 0) {
-            // down 最初にフォーカスが当たっている場合、次の要素
-            // up 最後の要素
-            hits[0].update({ focused: false });
-            hits[direction ? focusedIndex + 1 : hits.length - 1].update({ focused: true });
-            // フォーカスが0 < x < lastに当たっているなら次の要素にフォーカス
-        }
-        else if (0 < focusedIndex && focusedIndex < hits.length - 1) {
-            hits[focusedIndex].update({ focused: false });
-            hits[direction ? focusedIndex + 1 : focusedIndex - 1].update({ focused: true });
-            // down: 最後の要素にフォーカスが当たっていれば、最初の要素にフォーカス
-            // up: 最後から2番目の要素にフォーカス
-        }
-        else if (focusedIndex === hits.length - 1) {
-            hits[focusedIndex].update({ focused: false });
-            hits[direction ? 0 : focusedIndex - 1].update({ focused: true });
-        }
-    }
-    focusDown() {
-        this.switchFocus(true);
-    }
-    focusUp() {
-        this.switchFocus(false);
-    }
-    /**
      * open an url of a focused hit
      */
     open() {
         const hits = this.getHits();
         hits.forEach(hit => {
-            if (hit.focused) {
+            if (hit === this.root.activeElement)
                 hit.openPage();
-            }
         });
     }
     closeTab() {
         const hits = this.getHits();
         hits.forEach(hit => {
-            if (hit.focused)
+            if (hit === this.root.activeElement)
                 hit.closeTab();
         });
     }
@@ -367,6 +412,17 @@ class SuggestView extends HTMLElement {
      */
     getHits() {
         return [...this.view.children];
+    }
+    moveFocusUp() {
+        const prev = this.root.activeElement.previousSibling;
+        prev.focus();
+    }
+    /**
+     * move focus
+     */
+    moveFocusDown() {
+        const next = this.root.activeElement.nextSibling;
+        next.focus();
     }
 }
 exports.default = SuggestView;
@@ -385,91 +441,145 @@ customElements.define('suggest-view', SuggestView);
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Fuse = __webpack_require__(/*! fuse.js */ "./node_modules/fuse.js/dist/fuse.js");
 const suggest_view_1 = __webpack_require__(/*! ./components/suggest-view */ "./src/components/suggest-view.ts");
-// searchbox
-const searchbox = document.getElementById('searchbox');
-searchbox.className = 'searchbox';
-searchbox.autofocus = true;
-/**
- * 検索ボックスに入力されたら検索する
- */
-searchbox.oninput = (e) => {
-    if (userInput !== searchbox.value) { // 入力によって値が変わった場合
-        if (searchbox.value === '') { // 空ならタブを表示
-            view.clear();
-            view.showAllTabs();
-        }
-        else {
-            view.clear();
-            window.clearTimeout(timerID);
-            timerID = window.setTimeout(search, 300, searchbox.value); // 0.3s
-        }
-        userInput = searchbox.value;
-    }
-};
-/**
- * searchboxのkeyboard event
- */
-searchbox.onkeydown = (e) => {
-    if (!e.isComposing) {
-        if (e.key === 'Enter') {
-            chrome.tabs.create({ url: `https://www.google.com/search?q=${searchbox.value}` });
-        }
-    }
-};
+const log = console.log;
 // 検索結果の表示view
 const view = new suggest_view_1.default();
 document.body.appendChild(view);
-let userInput = '';
-let timerID;
-const log = console.log;
+// searchbox
+// const searchbox = <HTMLInputElement>document.getElementById('searchbox')
+// searchbox.className = 'searchbox'
+// searchbox.autofocus = true
+/**
+ * 検索ボックスに入力されたら検索する
+ */
+// searchbox.oninput = (e: InputEvent) => {
+//   if (userInput !== searchbox.value) { // 入力によって値が変わった場合
+//     if (searchbox.value === ''){ // 空ならタブを表示
+//       view.clear()
+//       view.showAllTabs()
+//     } else {
+//       view.clear()
+//       window.clearTimeout(timerID)
+//       timerID = window.setTimeout(search, 300, searchbox.value) // 0.3s
+//     }
+//     userInput = searchbox.value
+//   }
+// }
+/**
+ * searchboxのkeyboard event
+ */
+// searchbox.onkeydown = (e: any) => {
+//   if (!e.isComposing) {
+//     if (e.key === 'Enter') {
+//       chrome.tabs.create({url: `https://www.google.com/search?q=${searchbox.value}`})
+//     }
+//   }
+// }
+// let userInput = ''
+// let timerID: number
 /**
  * fuzzy search option
  */
-const option = {
-    shouldSort: true,
-    includeScore: true,
-    includeMatches: true,
-    minMatchCharLength: 1,
-    threshold: 0.35,
-    maxPatternLength: 32,
-    keys: ['title', 'url'],
-};
+// const option = {
+//   shouldSort: true,
+//   includeScore: true,
+//   includeMatches: true,
+//   minMatchCharLength: 1,
+//   threshold: 0.35, // 0に近ければより厳しい
+//   maxPatternLength: 32,
+//   keys: [ 'title', 'url' ],
+// }
 /**
  * tree構造を一次元のリストにする
  */
-function treeToFlatList(tree) {
-    function loop(node, result) {
-        if (node.url) { // ディレクトリはurlを持たないのでこれで判断する
-            result.push(node);
-        }
-        else if (node.children) {
-            for (let i = 0; i < node.children.length; i++) {
-                const item = node.children[i];
-                loop(item, result);
-            }
-        }
-        return result;
+// function treeToFlatList (tree: BookmarkTreeNode): BookmarkTreeNode[] {
+//   function loop(node: BookmarkTreeNode, 
+//     result: BookmarkTreeNode[]) {
+//     if (node.url) { // ディレクトリはurlを持たないのでこれで判断する
+//       result.push(node)
+//     } else if (node.children) {
+//       for(let i = 0; i < node.children.length; i++) {
+//         const item = node.children[i]
+//         loop(item, result)
+//       }
+//     }
+//     return result
+//   }
+//   return loop(tree, [])
+// }
+// function search(text: string) {
+//   // tabs, history, bookmarksを取得する
+//   chrome.tabs.query({}, tabs => {
+//     let candidates: ChromeItem[] = tabs
+//     chrome.history.search({ text: '', maxResults: 20 }, history => {
+//       candidates = deduplicate(candidates, history)
+//       chrome.bookmarks.getTree(tree => {
+//         const bookmarks = treeToFlatList(tree[0])
+//         candidates = deduplicate(candidates, bookmarks)
+//         const fuse = new Fuse(candidates, option)
+//         const result = fuse.search(text)
+//         view.updateView(result) // わからない
+//       })
+//     })
+//   })
+// }
+/**
+ * arrayの重複を排除する
+ * @param {*} arr1 array of object
+ * @param {*} arr2 array of object
+ * arr1に重複を排除して追加する
+ */
+// function deduplicate (arr1: ChromeItem[], arr2: ChromeItem[]) {
+//   arr2.forEach( item2 => {
+//     let flag = true
+//     arr1.forEach( item1 => {
+//       if (item1.url === item2.url) {
+//         flag = false
+//         return
+//       }
+//     })
+//     if (flag) arr1.push(item2)
+//   })
+//   return arr1
+// }
+// window events
+/**
+ * popupが表示されたら実行される処理
+ */
+window.onload = () => {
+    view.showAllTabs();
+};
+/**
+ * extension用のコマンドのevent listener
+ */
+chrome.commands.onCommand.addListener(cmd => {
+    if (cmd === 'close-tab') {
+        view.closeTab();
     }
-    return loop(tree, []);
-}
-function search(text) {
-    // tabs, history, bookmarksを取得する
-    chrome.tabs.query({}, tabs => {
-        let candidates = tabs;
-        chrome.history.search({ text: '', maxResults: 20 }, history => {
-            candidates = deduplicate(candidates, history);
-            chrome.bookmarks.getTree(tree => {
-                const bookmarks = treeToFlatList(tree[0]);
-                candidates = deduplicate(candidates, bookmarks);
-                const fuse = new Fuse(candidates, option);
-                const result = fuse.search(text);
-                view.updateView(result); // わからない
-            });
-        });
-    });
-}
+});
+// document.body.onkeydown = e => {
+//   if(e.key === 'Tab') log(e.key)
+//   // 上矢印が押された疑似keybownでshift + tabを押す
+//   if (e.key === 'ArrowUp') {
+//     log(e.key)
+//     document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Tab', shiftKey: true}))
+//   }
+// }
+
+
+/***/ }),
+
+/***/ "./src/utilities.ts":
+/*!**************************!*\
+  !*** ./src/utilities.ts ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * arrayの重複を排除する
  * @param {*} arr1 array of object
@@ -490,40 +600,26 @@ function deduplicate(arr1, arr2) {
     });
     return arr1;
 }
-// window events
+exports.deduplicate = deduplicate;
 /**
- * popupが表示されたら実行される処理
+ * tree構造を一次元のリストにする
  */
-window.onload = () => {
-    view.showAllTabs();
-};
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'Tab') {
-        if (searchbox === document.activeElement)
-            searchbox.blur();
-        view.focusDown();
+function treeToFlatList(tree) {
+    function loop(node, result) {
+        if (node.url) { // ディレクトリはurlを持たないのでこれで判断する
+            result.push(node);
+        }
+        else if (node.children) {
+            for (let i = 0; i < node.children.length; i++) {
+                const item = node.children[i];
+                loop(item, result);
+            }
+        }
+        return result;
     }
-    else if (e.key === 'Enter') {
-        view.open();
-    }
-    else if (e.key === 'ArrowDown') {
-        if (searchbox === document.activeElement)
-            searchbox.blur();
-        view.focusDown();
-    }
-    else if (e.key === 'ArrowUp') {
-        if (searchbox === document.activeElement)
-            searchbox.blur();
-        view.focusUp();
-    }
-});
-/**
- * extension用のコマンドのevent listener
- */
-chrome.commands.onCommand.addListener(cmd => {
-    if (cmd === 'close-tab')
-        view.closeTab();
-});
+    return loop(tree, []);
+}
+exports.treeToFlatList = treeToFlatList;
 
 
 /***/ })

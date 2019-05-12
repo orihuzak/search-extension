@@ -1,4 +1,4 @@
-import { Tab, HistoryItem, BookmarkTreeNode } from '../chrome-type'
+import { Tab, HistoryItem, BookmarkTreeNode, ChromeItem, isTab, isHistoryItem, isBookmarkTreeNode } from '../chrome-type'
 import SuggestView from './suggest-view'
 
 const log = console.log
@@ -10,7 +10,7 @@ export default class Hit extends HTMLElement {
   private name: HTMLDivElement
   private url: HTMLDivElement
   private icon: HTMLImageElement
-  public focused: boolean  // フォーカスが当たっているかどうか
+  public tabIndex: number
 
   constructor () {
     super()
@@ -36,6 +36,12 @@ export default class Hit extends HTMLElement {
     // shadow domに追加
     this.shadow.appendChild(style)
     this.shadow.appendChild(this.wrapper)
+
+    this.addEventListener('keydown', e => {
+      if(e.key === 'Enter') {
+        this.openPage()
+      }
+    })
   }
 
   /**
@@ -44,29 +50,37 @@ export default class Hit extends HTMLElement {
    * @param url website url
    * @param iconUrl website favicon url
    */
-  public setContents(item: any) {
+  public setContents(item: ChromeItem) {
     // itemの基本情報の設定
-    this.itemID = item.id
-    if('active' in item) {
+    // item.idがstringならnumberに変換
+    this.itemID = typeof item.id === 'string' ? parseInt(item.id) : item.id
+    // hitに表示するものを設定
+    this.name.innerText = item.title
+    this.url.innerText = decodeURI(item.url)
+    if (isTab(item)) {
       this.type = 'tab'
+      // set icon
+      this.icon.src = item.favIconUrl
       // closeボタンを追加
       const closeButton = document.createElement('button')
       closeButton.className = 'card__close'
       closeButton.innerText = `close` // close: <shortcut>にしたい
       closeButton.addEventListener('click', this.closeTab.bind(this))
       this.wrapper.appendChild(closeButton)
-    } else if ('lastVisitTime' in item) this.type = 'history'
-    else if ('dateAdded' in item) this.type = 'bookmark'
-    // hitに表示するものを設定
-    this.name.innerText = item.title
-    this.url.innerText = decodeURI(item.url)
-    // iconの設定
-    if(this.type === 'tab') this.icon.src = item.favIconUrl
-    else if (this.type === 'bookmark') this.icon.src = './img/bookmark.png'
-    else if (this.type === 'history') this.icon.src = './img/history.png'
+    } else if (isHistoryItem(item)) {
+      this.type = 'history'
+      this.icon.src = './img/history.png' // set icon
+    }
+    else if (isBookmarkTreeNode(item)) {
+      this.type = 'bookmark'
+      this.icon.src = './img/bookmark.png' // set icon
+    }
   }
 
-  /** hitがクリックされたら発動します */
+  /** 
+   * hitがクリックされたら発動します
+   * openTabとopenPageの違いわかりづらいので名前を改善する
+   **/
   public openPage() {
     if (this.type === 'tab') {
       chrome.tabs.update(this.itemID, {active: true}, tab => {
@@ -89,33 +103,9 @@ export default class Hit extends HTMLElement {
    * タブを閉じ、リストから自身を削除する
    */
   public closeTab() {
+    log(this.itemID)
     chrome.tabs.remove(this.itemID)
     this.parentNode.removeChild(this)
-  }
-
-  /**
-   * hitの状態を更新する
-   */
-  public update(option: {focused: boolean} = {focused: false}) {
-    if(this.focused !== option.focused) {
-      this.focused = option.focused
-      // focusされたらscrollする
-      if (this.focused) {
-        this.scrollIntoView({
-          behavior: "smooth",
-          block: "end"
-        })
-      }
-    }
-    this.updateStyle()
-  }
-
-  private updateStyle(){
-    if (this.focused) {
-      this.wrapper.className += '-focused'
-    } else {
-      this.wrapper.className = 'wrapper'
-    }
   }
 }
 
