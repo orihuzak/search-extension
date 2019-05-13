@@ -10,7 +10,8 @@ export default class Hit extends HTMLElement {
   private name: HTMLDivElement
   private url: HTMLDivElement
   private icon: HTMLImageElement
-  public tabIndex: number
+  public focused: boolean
+  // public tabIndex: number
 
   constructor () {
     super()
@@ -103,9 +104,42 @@ export default class Hit extends HTMLElement {
    * タブを閉じ、リストから自身を削除する
    */
   public closeTab() {
-    log(this.itemID)
     chrome.tabs.remove(this.itemID)
     this.parentNode.removeChild(this)
+  }
+
+  /** hitの状態を更新する */
+  public update(option: {focused: boolean} = {focused: false}) {
+    if(this.focused !== option.focused) {
+      this.focused = option.focused
+    }
+    this.updateStyle()
+  }
+
+  /**
+   * focusされたhitのためのstyle変更
+   */
+  private updateStyle(){
+    if (this.focused) {
+      this.wrapper.className += '-focused'
+    } else {
+      this.wrapper.className = 'wrapper'
+    }
+  }
+
+  /**
+   * フォーカスする
+   */
+  public focus() {
+    this.update({focused: true})
+    this.scrollIntoView({behavior: 'smooth', block: 'nearest'})
+  }
+
+  /**
+   * フォーカスを外す
+   */
+  public blur() {
+    this.update({focused: false})
   }
 }
 
