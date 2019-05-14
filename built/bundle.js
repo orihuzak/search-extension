@@ -201,11 +201,11 @@ class Hit extends HTMLElement {
         }
         else if (chrome_type_1.isHistoryItem(item)) {
             this.type = 'history';
-            this.icon.src = './img/history.png'; // set icon
+            this.icon.src = './img/history.svg'; // set icon
         }
         else if (chrome_type_1.isBookmarkTreeNode(item)) {
             this.type = 'bookmark';
-            this.icon.src = './img/bookmark.png'; // set icon
+            this.icon.src = './img/bookmark.svg'; // set icon
         }
     }
     /**
@@ -319,7 +319,6 @@ class SuggestView extends HTMLElement {
          * 検索ボックスに入力されたら検索する
          */
         this.searchbox.oninput = (e) => {
-            log(this.searchbox.value);
             if (this.userInput !== this.searchbox.value) { // 入力によって値が変わった場合
                 this.clear();
                 if (this.searchbox.value === '') { // 空ならタブを表示
@@ -440,53 +439,15 @@ class SuggestView extends HTMLElement {
         }
     }
     closeTab() {
-        const hits = this.getHits();
-        hits.forEach(hit => {
-            if (hit === this.root.activeElement)
-                hit.closeTab();
-        });
+        const focused = this.getFocusedHit();
+        if (focused)
+            focused.closeTab();
     }
     /**
      * viewのchild elementをすべて取得する
      */
     getHits() {
         return [...this.view.children];
-    }
-    /**
-     * move focus
-     * 不必要に複雑な感じがある・・・
-     * @param direction if true move down, false move up
-     */
-    switchFocus(direction = true) {
-        const hits = this.getHits();
-        let focusedIndex = null;
-        for (let i = 0; i < hits.length; i++) {
-            if (hits[i].focused) {
-                focusedIndex = i;
-                break;
-            }
-        }
-        // フォーカスがない場合は、最初の要素にフォーカス
-        if (focusedIndex === null) {
-            hits[direction ? 0 : hits.length - 1].update({ focused: true });
-        }
-        else if (focusedIndex === 0) {
-            // down 最初にフォーカスが当たっている場合、次の要素
-            // up 最後の要素
-            hits[0].update({ focused: false });
-            hits[direction ? focusedIndex + 1 : hits.length - 1].update({ focused: true });
-            // フォーカスが0 < x < lastに当たっているなら次の要素にフォーカス
-        }
-        else if (0 < focusedIndex && focusedIndex < hits.length - 1) {
-            hits[focusedIndex].update({ focused: false });
-            hits[direction ? focusedIndex + 1 : focusedIndex - 1].update({ focused: true });
-            // down: 最後の要素にフォーカスが当たっていれば、最初の要素にフォーカス
-            // up: 最後から2番目の要素にフォーカス
-        }
-        else if (focusedIndex === hits.length - 1) {
-            hits[focusedIndex].update({ focused: false });
-            hits[direction ? 0 : focusedIndex - 1].update({ focused: true });
-        }
     }
     /**
      * focusされたhitを返す。なければfalseを返す
@@ -524,7 +485,6 @@ class SuggestView extends HTMLElement {
     focusUp() {
         // this.switchFocus(false)
         const focused = this.getFocusedHit();
-        log(focused);
         if (focused) { // Hitが帰ったらかどうかを判断
             // 次のhitがあれば次をfocus、なければ最初のhitをfocus
             if (focused.previousSibling) {
@@ -538,6 +498,9 @@ class SuggestView extends HTMLElement {
         }
         else
             this.view.lastChild.focus(); // 返ってなければ最後のhitをfocus
+    }
+    setPlaceHolder(hit) {
+        this.searchbox.placeholder = hit.name.innerText;
     }
 }
 exports.default = SuggestView;

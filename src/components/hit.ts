@@ -7,9 +7,9 @@ export default class Hit extends HTMLElement {
   private itemID: number
   private type: string
   private wrapper: HTMLDivElement
-  private name: HTMLDivElement
   private url: HTMLDivElement
   private icon: HTMLImageElement
+  public name: HTMLDivElement
   public focused: boolean
   // public tabIndex: number
 
@@ -70,11 +70,11 @@ export default class Hit extends HTMLElement {
       this.wrapper.appendChild(closeButton)
     } else if (isHistoryItem(item)) {
       this.type = 'history'
-      this.icon.src = './img/history.png' // set icon
+      this.icon.src = './img/history.svg' // set icon
     }
     else if (isBookmarkTreeNode(item)) {
       this.type = 'bookmark'
-      this.icon.src = './img/bookmark.png' // set icon
+      this.icon.src = './img/bookmark.svg' // set icon
     }
   }
 
