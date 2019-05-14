@@ -14,7 +14,7 @@
         "default": "Ctrl+Shift+F",
         "mac": "MacCtrl+Shift+F"
       },
-      "description": "Open popup.html"
+      "description": "Open popup"
     },
     "close-tab": {
       "suggested_key": {
