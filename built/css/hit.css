@@ -1,25 +1,29 @@
-.wrapper {
+.card {
   display: flex;
   align-items: center;
   border-bottom: 1px solid #555;
 }
 
-.wrapper-focused {
+.card--focused {
   display: flex;
   align-items: center;
   border-bottom: 1px solid #555;
   background-color: #2085e4af;
 }
 
-.wrapper:hover {
+.card:hover {
   background-color: #ddab21af; 
 }
 
-.wrapper-focused > .card__close {
+.card--focused > .card__close {
   visibility: visible;
 }
-.wrapper:hover > .card__close {
+.card:hover > .card__close {
   visibility: visible;
+}
+
+.card__title {
+  font-size: 1.5em;
 }
 
 .card__close {

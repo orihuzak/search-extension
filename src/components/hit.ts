@@ -1,7 +1,13 @@
 import { Tab, HistoryItem, BookmarkTreeNode, ChromeItem, isTab, isHistoryItem, isBookmarkTreeNode } from '../chrome-type'
-import SuggestView from './suggest-view'
 
+const cssName = {
+  card: 'card',
+  cardFocued: 'card--focused',
+  title: 'card__title',
+  url: 'card__url'
+}
 const log = console.log
+
 export default class Hit extends HTMLElement {
   private shadow: ShadowRoot
   private itemID: number
@@ -17,11 +23,15 @@ export default class Hit extends HTMLElement {
     super()
     this.shadow = this.attachShadow({ mode: 'open' })
     this.wrapper = document.createElement('div')
-    this.wrapper.className = 'wrapper'
+    this.wrapper.className = cssName.card
+    // icon
     this.icon = document.createElement('img')
     this.icon.width = 20
     this.icon.height = 20
+    // title
     this.name = document.createElement('div')
+    this.name.className = cssName.title
+    // url
     this.url = document.createElement('div')
     const dataWrapper = document.createElement('div')
     dataWrapper.className = 'card__data'
@@ -121,9 +131,9 @@ export default class Hit extends HTMLElement {
    */
   private updateStyle(){
     if (this.focused) {
-      this.wrapper.className += '-focused'
+      this.wrapper.className = cssName.cardFocued
     } else {
-      this.wrapper.className = 'wrapper'
+      this.wrapper.className = cssName.card
     }
   }
 

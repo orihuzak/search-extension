@@ -1,0 +1,6 @@
+
+// extensionボタンが押されたらcontent scriptsにメッセージ
+chrome.browserAction.onClicked.addListener( tab => {
+  chrome.tabs.sendMessage(tab.id, {})
+})
+

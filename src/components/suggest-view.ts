@@ -1,7 +1,8 @@
 const log = console.log
 import { Tab, HistoryItem, BookmarkTreeNode, ChromeItem } from '../chrome-type'
 import { deduplicate, treeToFlatList } from '../utilities'
-import * as Fuse from 'fuse.js'
+import Fuse = require('fuse.js')
+// import * as Fuse from 'fuse.js' // webpack
 import { FuseResult, FuseOptions } from 'fuse.js'
 import Hit from './hit'
 
@@ -92,6 +93,7 @@ export default class SuggestView extends HTMLElement {
 
     // 描画時にやりたい処理
     window.onload = () => {
+      this.showAllTabs()
     }
   }
 
@@ -199,12 +201,20 @@ export default class SuggestView extends HTMLElement {
       // 次のhitがあれば次をfocus、なければ最初のhitをfocus
       if(focused.nextSibling) {
         focused.blur();
-        (<Hit>focused.nextSibling).focus()
+        const next = <Hit>focused.nextSibling
+        next.focus()
+        this.setPlaceHolder(next)
       } else {
         focused.blur();
-        (<Hit>this.view.firstChild).focus()
+        const next = <Hit>this.view.firstChild
+        next.focus()
+        this.setPlaceHolder(next)
       }
-    } else (<Hit>this.view.firstChild).focus()  // 返ってなければ最初のhitをfocus
+    } else { // 返ってなければ最初のhitをfocus
+      const next = <Hit>this.view.firstChild
+      next.focus()
+      this.setPlaceHolder(next)
+    }
   }
 
   /**
@@ -217,12 +227,20 @@ export default class SuggestView extends HTMLElement {
       // 次のhitがあれば次をfocus、なければ最初のhitをfocus
       if(focused.previousSibling) {
         focused.blur();
-        (<Hit>focused.previousSibling).focus()
+        const next = <Hit>focused.previousSibling
+        next.focus()
+        this.setPlaceHolder(next)
       } else {
-        focused.blur();
-        (<Hit>this.view.lastChild).focus()
+        focused.blur()
+        const next = <Hit>this.view.lastChild
+        next.focus()
+        this.setPlaceHolder(next)
       }
-    } else (<Hit>this.view.lastChild).focus() // 返ってなければ最後のhitをfocus
+    } else {
+      const next = <Hit>this.view.lastChild
+      next.focus() // 返ってなければ最後のhitをfocus
+      this.setPlaceHolder(next)
+    }
   }
 
   public setPlaceHolder(hit: Hit) {
