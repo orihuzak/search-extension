@@ -1,6 +1,17 @@
+const log = console.log
 const frame = document.createElement('iframe')
 frame.id = 'orih-frame'
 frame.src = chrome.extension.getURL('view.html')
+
+document.body.onclick = (click: MouseEvent) => {
+  if (document.getElementById('orih-frame')) {
+    const rect = frame.getBoundingClientRect()
+    if (click.x < rect.left || click.x > rect.right
+      || click.y < rect.top || click.y > rect.bottom) {
+        document.documentElement.removeChild(frame)
+    }
+  }
+}
 
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (document.getElementById('orih-frame')){
@@ -8,9 +19,9 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   } else {
     document.documentElement.appendChild(frame)
   }
-  
 })
 
+ 
 /**
  * extension用のコマンドのevent listener
  */

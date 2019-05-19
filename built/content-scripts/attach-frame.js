@@ -117,15 +117,21 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"attach-frame.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+})({"content-scripts/attach-frame.ts":[function(require,module,exports) {
+var log = console.log;
 var frame = document.createElement('iframe');
 frame.id = 'orih-frame';
-frame.src = chrome.extension.getURL('view.html'); // root.appendChild(frame)
+frame.src = chrome.extension.getURL('view.html');
+
+document.body.onclick = function (click) {
+  if (document.getElementById('orih-frame')) {
+    var rect = frame.getBoundingClientRect();
+
+    if (click.x < rect.left || click.x > rect.right || click.y < rect.top || click.y > rect.bottom) {
+      document.documentElement.removeChild(frame);
+    }
+  }
+};
 
 chrome.runtime.onMessage.addListener(function (message, sender) {
   if (document.getElementById('orih-frame')) {
@@ -170,7 +176,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "32927" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "34323" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -345,5 +351,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../node_modules/parcel/src/builtins/hmr-runtime.js","attach-frame.ts"], null)
-//# sourceMappingURL=/attach-frame.js.map
+},{}]},{},["../node_modules/parcel/src/builtins/hmr-runtime.js","content-scripts/attach-frame.ts"], null)
+//# sourceMappingURL=/content-scripts/attach-frame.js.map
