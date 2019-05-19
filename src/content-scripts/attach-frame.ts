@@ -13,11 +13,15 @@ document.body.onclick = (click: MouseEvent) => {
   }
 }
 
+// この辺の処理はあとでなんとかしたい
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (document.getElementById('orih-frame')){
     document.documentElement.removeChild(frame)
   } else {
     document.documentElement.appendChild(frame)
+  }
+  if (message === 'unactive') {
+    document.documentElement.removeChild(frame)
   }
 })
 

@@ -131,13 +131,18 @@ document.body.onclick = function (click) {
       document.documentElement.removeChild(frame);
     }
   }
-};
+}; // この辺の処理はあとでなんとかしたい
+
 
 chrome.runtime.onMessage.addListener(function (message, sender) {
   if (document.getElementById('orih-frame')) {
     document.documentElement.removeChild(frame);
   } else {
     document.documentElement.appendChild(frame);
+  }
+
+  if (message === 'unactive') {
+    document.documentElement.removeChild(frame);
   }
 });
 /**
@@ -176,7 +181,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "34323" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "44587" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
