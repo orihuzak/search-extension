@@ -879,13 +879,13 @@ Object.defineProperty(exports, "__esModule", {
 
 var chrome_type_1 = require("../chrome-type");
 
+var log = console.log;
 var cssName = {
   card: 'card',
   cardFocued: 'card--focused',
   title: 'card__title',
   url: 'card__url'
 };
-var log = console.log;
 
 var Hit =
 /*#__PURE__*/
@@ -959,7 +959,7 @@ function (_HTMLElement) {
       this.url.innerText = decodeURI(item.url);
 
       if (chrome_type_1.isTab(item)) {
-        this.type = 'tab'; // set icon
+        this.itemType = 'tab'; // set icon
 
         this.icon.src = item.favIconUrl; // closeボタンを追加
 
@@ -970,10 +970,10 @@ function (_HTMLElement) {
         closeButton.addEventListener('click', this.closeTab.bind(this));
         this.wrapper.appendChild(closeButton);
       } else if (chrome_type_1.isHistoryItem(item)) {
-        this.type = 'history';
+        this.itemType = 'history';
         this.icon.src = './img/history.svg'; // set icon
       } else if (chrome_type_1.isBookmarkTreeNode(item)) {
-        this.type = 'bookmark';
+        this.itemType = 'bookmark';
         this.icon.src = './img/bookmark.svg'; // set icon
       }
     }
@@ -985,7 +985,7 @@ function (_HTMLElement) {
   }, {
     key: "openPage",
     value: function openPage() {
-      if (this.type === 'tab') {
+      if (this.itemType === 'tab') {
         chrome.tabs.update(this.itemID, {
           active: true
         }, function (tab) {
@@ -993,9 +993,9 @@ function (_HTMLElement) {
             focused: true
           });
         });
-      } else if (this.type === 'bookmark') {
+      } else if (this.itemType === 'bookmark') {
         this.openTab();
-      } else if (this.type === 'history') {
+      } else if (this.itemType === 'history') {
         this.openTab();
       }
     }
@@ -1056,10 +1056,19 @@ function (_HTMLElement) {
       this.update({
         focused: true
       });
-      this.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-      });
+
+      if (this.parentNode.firstChild === this) {
+        // 自身がfirst childなら一番上までスクロールする
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      } else {
+        this.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        });
+      }
     }
     /**
      * フォーカスを外す
@@ -1171,7 +1180,6 @@ function (_HTMLElement) {
     _this.searchbox = document.createElement('input');
     _this.searchbox.className = 'searchbox';
     _this.searchbox.autofocus = true;
-    _this.searchbox.tabIndex = 1;
     /**
      * 検索ボックスに入力されたら検索する
      */
@@ -1220,7 +1228,8 @@ function (_HTMLElement) {
     _this.root.appendChild(_this.searchbox); // リストを表示するビュー
 
 
-    _this.view = document.createElement('ul');
+    _this.view = document.createElement('div');
+    _this.view.className = 'view';
 
     _this.root.appendChild(_this.view); // cloneの元になるhit
 
@@ -1234,6 +1243,13 @@ function (_HTMLElement) {
 
 
     window.onload = function () {
+      _this.searchbox.focus();
+
+      var rect = _this.searchbox.getBoundingClientRect();
+
+      _this.view.style.paddingTop = rect.bottom + 'px';
+      _this.view.style.top = rect.bottom + 'px';
+
       _this.showAllTabs();
     };
 
@@ -1391,39 +1407,49 @@ function (_HTMLElement) {
       return false;
     }
     /**
-     * focus down
+     * move Focus
+     * @param flag if flag is true focuse up, false focus down
      */
 
   }, {
-    key: "focusDown",
-    value: function focusDown() {
-      // this.switchFocus(true)
+    key: "moveFocus",
+    value: function moveFocus(flag) {
       var focused = this.getFocusedHit();
 
       if (focused) {
-        // Hitが帰ったらかどうかを判断
-        // 次のhitがあれば次をfocus、なければ最初のhitをfocus
-        if (focused.nextSibling) {
-          focused.blur();
-          var next = focused.nextSibling;
+        // focused hitがあるかどうかを判定
+        focused.blur(); // 次のhitがあれば次をfocus、なければ最初のhitをfocus
+
+        var nextNode = flag ? focused.nextSibling : focused.previousSibling;
+
+        if (nextNode) {
+          var next = nextNode;
           next.focus();
           this.setPlaceHolder(next);
         } else {
-          focused.blur();
-          var _next = this.view.firstChild;
+          var _next = flag ? this.view.firstChild : this.view.lastChild;
 
           _next.focus();
 
           this.setPlaceHolder(_next);
         }
       } else {
-        // 返ってなければ最初のhitをfocus
-        var _next2 = this.view.firstChild;
+        // focused hitがなければ最初のhitをfocus
+        var _next2 = flag ? this.view.firstChild : this.view.lastChild;
 
         _next2.focus();
 
         this.setPlaceHolder(_next2);
       }
+    }
+    /**
+     * focus down
+     */
+
+  }, {
+    key: "focusDown",
+    value: function focusDown() {
+      this.moveFocus(true);
     }
     /**
      * focus up
@@ -1432,33 +1458,7 @@ function (_HTMLElement) {
   }, {
     key: "focusUp",
     value: function focusUp() {
-      // this.switchFocus(false)
-      var focused = this.getFocusedHit();
-
-      if (focused) {
-        // Hitが帰ったらかどうかを判断
-        // 次のhitがあれば次をfocus、なければ最初のhitをfocus
-        if (focused.previousSibling) {
-          focused.blur();
-          var next = focused.previousSibling;
-          next.focus();
-          this.setPlaceHolder(next);
-        } else {
-          focused.blur();
-          var _next3 = this.view.lastChild;
-
-          _next3.focus();
-
-          this.setPlaceHolder(_next3);
-        }
-      } else {
-        var _next4 = this.view.lastChild;
-
-        _next4.focus(); // 返ってなければ最後のhitをfocus
-
-
-        this.setPlaceHolder(_next4);
-      }
+      this.moveFocus(false);
     }
   }, {
     key: "setPlaceHolder",
@@ -1518,7 +1518,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "44587" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "39707" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

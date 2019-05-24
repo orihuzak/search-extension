@@ -1,5 +1,4 @@
 #orih-frame {
-  /* display: none; */
   position: fixed;
   left: 0;
   right: 0;
@@ -9,6 +8,4 @@
   height: 50%;
   margin: auto;
   z-index: 9999; /* 最前面に表示 */
-  /* background-color: blue; */
-  /* color: white; */
 }

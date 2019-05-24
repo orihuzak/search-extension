@@ -121,7 +121,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 var log = console.log;
 var frame = document.createElement('iframe');
 frame.id = 'orih-frame';
-frame.src = chrome.extension.getURL('view.html');
+frame.src = chrome.extension.getURL('view.html'); // frame.scrolling = 'no'
 
 document.body.onclick = function (click) {
   if (document.getElementById('orih-frame')) {
@@ -181,7 +181,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "44587" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "39707" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

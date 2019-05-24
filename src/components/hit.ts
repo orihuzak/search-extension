@@ -1,4 +1,5 @@
 import { Tab, HistoryItem, BookmarkTreeNode, ChromeItem, isTab, isHistoryItem, isBookmarkTreeNode } from '../chrome-type'
+const log = console.log
 
 const cssName = {
   card: 'card',
@@ -6,12 +7,11 @@ const cssName = {
   title: 'card__title',
   url: 'card__url'
 }
-const log = console.log
 
 export default class Hit extends HTMLElement {
   private shadow: ShadowRoot
   private itemID: number
-  private type: string
+  private itemType: string
   private wrapper: HTMLDivElement
   private url: HTMLDivElement
   private icon: HTMLImageElement
@@ -69,7 +69,7 @@ export default class Hit extends HTMLElement {
     this.name.innerText = item.title
     this.url.innerText = decodeURI(item.url)
     if (isTab(item)) {
-      this.type = 'tab'
+      this.itemType = 'tab'
       // set icon
       this.icon.src = item.favIconUrl
       // closeボタンを追加
@@ -79,11 +79,11 @@ export default class Hit extends HTMLElement {
       closeButton.addEventListener('click', this.closeTab.bind(this))
       this.wrapper.appendChild(closeButton)
     } else if (isHistoryItem(item)) {
-      this.type = 'history'
+      this.itemType = 'history'
       this.icon.src = './img/history.svg' // set icon
     }
     else if (isBookmarkTreeNode(item)) {
-      this.type = 'bookmark'
+      this.itemType = 'bookmark'
       this.icon.src = './img/bookmark.svg' // set icon
     }
   }
@@ -93,16 +93,15 @@ export default class Hit extends HTMLElement {
    * openTabとopenPageの違いわかりづらいので名前を改善する
    **/
   public openPage() {
-    if (this.type === 'tab') {
+    if (this.itemType === 'tab') {
       chrome.tabs.update(this.itemID, {active: true}, tab => {
         chrome.windows.update(tab.windowId, {focused: true})
       })
-    } else if (this.type === 'bookmark') {
+    } else if (this.itemType === 'bookmark') {
       this.openTab()
-    } else if (this.type === 'history') {
+    } else if (this.itemType === 'history') {
       this.openTab()
     }
-
   }
 
   /** 新しいタブで開く */
@@ -142,7 +141,15 @@ export default class Hit extends HTMLElement {
    */
   public focus() {
     this.update({focused: true})
-    this.scrollIntoView({behavior: 'smooth', block: 'nearest'})
+    if (this.parentNode.firstChild === this) {
+      // 自身がfirst childなら一番上までスクロールする
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    } else {
+      this.scrollIntoView({behavior: 'smooth', block: 'nearest'})
+    }
   }
 
   /**

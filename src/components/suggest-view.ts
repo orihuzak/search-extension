@@ -26,7 +26,7 @@ const option = {
 export default class SuggestView extends HTMLElement {
   public root: ShadowRoot
   public searchbox: HTMLInputElement
-  public view: HTMLUListElement
+  public view: HTMLDivElement
   private hit: Hit
   private userInput: string = ''
   private timerID: number
@@ -40,7 +40,7 @@ export default class SuggestView extends HTMLElement {
     this.searchbox = document.createElement('input')
     this.searchbox.className = 'searchbox'
     this.searchbox.autofocus = true
-    this.searchbox.tabIndex = 1
+
     /**
      * 検索ボックスに入力されたら検索する
      */
@@ -80,7 +80,8 @@ export default class SuggestView extends HTMLElement {
     this.root.appendChild(this.searchbox)
     
     // リストを表示するビュー
-    this.view = document.createElement('ul')
+    this.view = document.createElement('div')
+    this.view.className = 'view'
     this.root.appendChild(this.view)
     
     // cloneの元になるhit
@@ -93,6 +94,10 @@ export default class SuggestView extends HTMLElement {
 
     // 描画時にやりたい処理
     window.onload = () => {
+      this.searchbox.focus()
+      const rect = this.searchbox.getBoundingClientRect()
+      this.view.style.paddingTop = rect.bottom + 'px'
+      this.view.style.top = rect.bottom + 'px'
       this.showAllTabs()
     }
   }
@@ -192,56 +197,45 @@ export default class SuggestView extends HTMLElement {
   }
 
   /**
-   * focus down
+   * move Focus
+   * @param flag if flag is true focuse up, false focus down 
    */
-  public focusDown() {
-    // this.switchFocus(true)
+  private moveFocus(flag: boolean) {
     const focused = this.getFocusedHit()
-    if (focused) { // Hitが帰ったらかどうかを判断
+    if (focused) { // focused hitがあるかどうかを判定
+      focused.blur()
       // 次のhitがあれば次をfocus、なければ最初のhitをfocus
-      if(focused.nextSibling) {
-        focused.blur();
-        const next = <Hit>focused.nextSibling
+      const nextNode = flag ? focused.nextSibling : focused.previousSibling
+      if(nextNode) {
+        const next = <Hit>nextNode
         next.focus()
         this.setPlaceHolder(next)
       } else {
-        focused.blur();
-        const next = <Hit>this.view.firstChild
+        const next = <Hit>(flag ? this.view.firstChild : this.view.lastChild)
         next.focus()
         this.setPlaceHolder(next)
       }
-    } else { // 返ってなければ最初のhitをfocus
-      const next = <Hit>this.view.firstChild
+    } else { // focused hitがなければ最初のhitをfocus
+      const next = <Hit>(flag ? this.view.firstChild : this.view.lastChild)
       next.focus()
       this.setPlaceHolder(next)
     }
   }
 
   /**
+   * focus down
+   */
+  public focusDown() {
+    this.moveFocus(true)
+  }
+
+  /**
    * focus up
    */
   public focusUp() {
-    // this.switchFocus(false)
-    const focused = this.getFocusedHit()
-    if (focused) { // Hitが帰ったらかどうかを判断
-      // 次のhitがあれば次をfocus、なければ最初のhitをfocus
-      if(focused.previousSibling) {
-        focused.blur();
-        const next = <Hit>focused.previousSibling
-        next.focus()
-        this.setPlaceHolder(next)
-      } else {
-        focused.blur()
-        const next = <Hit>this.view.lastChild
-        next.focus()
-        this.setPlaceHolder(next)
-      }
-    } else {
-      const next = <Hit>this.view.lastChild
-      next.focus() // 返ってなければ最後のhitをfocus
-      this.setPlaceHolder(next)
-    }
+    this.moveFocus(false)
   }
+
 
   public setPlaceHolder(hit: Hit) {
     this.searchbox.placeholder = hit.name.innerText

@@ -2,6 +2,7 @@ const log = console.log
 const frame = document.createElement('iframe')
 frame.id = 'orih-frame'
 frame.src = chrome.extension.getURL('view.html')
+// frame.scrolling = 'no'
 
 document.body.onclick = (click: MouseEvent) => {
   if (document.getElementById('orih-frame')) {
