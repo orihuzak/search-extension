@@ -2,7 +2,6 @@ const log = console.log
 import { Tab, HistoryItem, BookmarkTreeNode, ChromeItem } from '../chrome-type'
 import { deduplicate, treeToFlatList } from '../utilities'
 import Fuse = require('fuse.js')
-// import * as Fuse from 'fuse.js' // webpack
 import { FuseResult, FuseOptions } from 'fuse.js'
 import Hit from './hit'
 

@@ -1,7 +1,7 @@
 { 
-  "name": "search tabs bookmarks history:dev",
+  "name": "search tabs bookmarks history",
   "description": "search tabs bookmarks history",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "manifest_version": 2,
   "permissions": [
     "bookmarks",

@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "view.ts",
   "license": "MIT",
   "private": true,
@@ -16,6 +16,8 @@
   },
   "scripts": {
     "dev": "parcel watch src/content-scripts/attach-frame.ts src/view.ts -d built",
-    "build": "parcel build src/content-scripts/attach-frame.ts src/view.ts -d built"
+    "build": "parcel build src/content-scripts/attach-frame.ts src/view.ts -d built",
+    "zip": "zip -r search-tabs-bookmarks-history.zip built/",
+    "prepare": "yarn build && yarn zip"
   }
 }
