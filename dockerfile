@@ -1,5 +1,6 @@
-FROM node:12.0-alpine
+FROM node:12-alpine
 WORKDIR /app
-RUN ["yarn", "install"]
-CMD ["yarn", "dev"]
-# CMD [ "sh" ]
+RUN apk add zip && \
+    yarn install
+# CMD ["yarn", "dev"]
+CMD [ "sh" ]

@@ -1,17 +1,35 @@
 { 
   "name": "search tabs bookmarks history",
   "description": "search tabs bookmarks history",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "manifest_version": 2,
-  "permissions": ["bookmarks", "history", "tabs"],
+  "permissions": [
+    "bookmarks",
+    "history",
+    "tabs",
+    "activeTab",
+    "<all_urls>"
+  ],
   "browser_action": {
-    "default_popup": "popup.html",
-    "default_icon": "./img/search.png"
+    "default_icon": "./img/dev.png"
   },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["css/attach-frame.css"],
+      "js": ["content-scripts/attach-frame.js"]
+    }
+  ],
+  "web_accessible_resources": [
+      "view.html"
+  ],
   "commands": {
     "_execute_browser_action": {
       "suggested_key": {
-        "default": "Ctrl+Shift+F",
+        "default": "Alt+E",
         "mac": "MacCtrl+Shift+F"
       },
       "description": "Open popup"

@@ -1,9 +1,14 @@
-ul {
-  padding: 0;
-}
 
 .searchbox {
-  /* width: 100%; */
+  position: fixed;
+  width: 100%;
+  font-size: 2em;
   /* background-color: #121212;
   color: #fff; */
+}
+
+.view {
+  /* overflow: auto; */
+  padding: 0;
+  width: 100%;
 }
