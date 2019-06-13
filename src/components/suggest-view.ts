@@ -1,22 +1,6 @@
 const log = console.log
 import { Tab, HistoryItem, BookmarkTreeNode, ChromeItem } from '../chrome-type'
-import { deduplicate, treeToFlatList } from '../utilities'
-import Fuse = require('fuse.js')
-import { FuseResult, FuseOptions } from 'fuse.js'
 import Hit from './hit'
-
-/**
- * fuzzy search option
- */
-const option = {
-  shouldSort: true,
-  includeScore: true,
-  includeMatches: true,
-  minMatchCharLength: 1,
-  threshold: 0.35, // 0に近ければより厳しい
-  maxPatternLength: 32,
-  keys: [ 'title', 'url' ],
-}
 
 /**
  * サジェスト用のviewクラス
@@ -102,19 +86,9 @@ export default class SuggestView extends HTMLElement {
   }
 
   public search() {
-    // tabs, history, bookmarksを取得する
-    chrome.tabs.query({}, tabs => {
-      let candidates: ChromeItem[] = tabs
-      chrome.history.search({ text: '', maxResults: 20 }, history => {
-        candidates = deduplicate(candidates, history)
-        chrome.bookmarks.getTree(tree => {
-          const bookmarks = treeToFlatList(tree[0])
-          candidates = deduplicate(candidates, bookmarks)
-          const fuse = new Fuse(candidates, option)
-          const result = fuse.search(this.searchbox.value)
-          this.updateView(result)
-        })
-      })
+    chrome.runtime.sendMessage({searchWord: this.searchbox.value},
+      (res) => {
+        this.updateView(res.searchResult)
     })
   }
 

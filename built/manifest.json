@@ -8,10 +8,10 @@
     "history",
     "tabs",
     "activeTab",
-    "<all_urls>"
+    "storage"
   ],
   "browser_action": {
-    "default_icon": "./img/dev.png"
+    "default_icon": "./img/search.png"
   },
   "background": {
     "scripts": ["background.js"]
@@ -19,8 +19,8 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "css": ["css/attach-frame.css"],
-      "js": ["content-scripts/attach-frame.js"]
+      "css": ["css/content-script.css"],
+      "js": ["content-script.js"]
     }
   ],
   "web_accessible_resources": [

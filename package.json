@@ -5,18 +5,18 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
-    "@types/chrome": "^0.0.83",
+    "@types/chrome": "^0.0.86",
     "@types/dom-inputevent": "^1.0.4",
     "parcel": "^1.12.3",
-    "typescript": "^3.4.5"
+    "typescript": "^3.5.1"
   },
   "dependencies": {
-    "fuse.js": "^3.4.4",
+    "fuse.js": "^3.4.5",
     "fuzzy": "^0.1.3"
   },
   "scripts": {
-    "dev": "parcel watch src/content-scripts/attach-frame.ts src/view.ts -d built",
-    "build": "parcel build src/content-scripts/attach-frame.ts src/view.ts -d built",
+    "dev": "parcel watch src/background.ts src/content-script.ts src/view.ts -d built",
+    "build": "parcel build src/background.ts src/content-script.ts src/view.ts -d built",
     "zip": "zip -r search-tabs-bookmarks-history.zip built/",
     "prepare": "yarn build && yarn zip"
   }
