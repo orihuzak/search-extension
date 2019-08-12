@@ -556,13 +556,20 @@ function (_HTMLElement) {
     value: function showAllTabs() {
       var _this3 = this;
 
-      chrome.tabs.query({}, function (tabs) {
-        tabs.forEach(function (tab, i) {
+      chrome.runtime.sendMessage({
+        tabs: true
+      }, function (res) {
+        res.tabs.forEach(function (tab, i) {
           var newHit = _this3.makeNewHit(tab);
 
           _this3.view.appendChild(newHit);
         });
-      });
+      }); // chrome.tabs.query({}, tabs => {
+      //   tabs.forEach( (tab, i) => {
+      //     const newHit = this.makeNewHit(tab)
+      //     this.view.appendChild(newHit)
+      //   })
+      // })
     }
     /**
      * 検索結果を再描画
@@ -785,7 +792,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "39797" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "38937" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

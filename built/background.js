@@ -831,9 +831,32 @@ var utilities_1 = require("./utilities");
 
 var Fuse = require("fuse.js");
 
-var items;
-var currentTab;
+var log = console.log; // あとで消す
+
+var items, currentTab, tabs, history, bookmarks;
+
+function getTabs() {
+  chrome.tabs.query({}, function (t) {
+    tabs = t;
+  });
+}
+
+function getHistory() {
+  chrome.history.search({
+    text: '',
+    maxResults: 20
+  }, function (h) {
+    history = h;
+  });
+}
+
+function getBookmarks() {
+  chrome.bookmarks.getTree(function (tree) {
+    bookmarks = utilities_1.treeToFlatList(tree[0]);
+  });
+}
 /** fuse option */
+
 
 var option = {
   shouldSort: true,
@@ -844,8 +867,28 @@ var option = {
   maxPatternLength: 32,
   keys: ['title', 'url']
 };
-var log = console.log; // あとで消す
-// extensionボタンが押されたらcontent scriptsにメッセージ
+/**
+ * arrayの重複を排除する
+ * @param {*} arr1 array of object
+ * @param {*} arr2 array of object
+ * arr1に重複を排除して追加する
+ */
+
+function deduplicate(arr1, arr2) {
+  arr2.forEach(function (item2) {
+    var flag = true;
+    arr1.forEach(function (item1) {
+      if (item1.url === item2.url) {
+        flag = false;
+        return;
+      }
+    });
+    if (flag) arr1.push(item2);
+  });
+  return arr1;
+}
+
+exports.deduplicate = deduplicate; // extensionボタンが押されたらcontent scriptsにメッセージ
 
 chrome.browserAction.onClicked.addListener(function (tab) {
   currentTab = tab;
@@ -858,9 +901,31 @@ chrome.browserAction.onClicked.addListener(function (tab) {
   } else {
     chrome.tabs.sendMessage(tab.id, {});
   }
-});
+}); // tabがアップデートされたらtabsを取得し直す
+
+chrome.tabs.onUpdated.addListener(function () {
+  getTabs();
+}); // tabが切り替わったらextensionを非表示
+
 chrome.tabs.onActivated.addListener(function () {
   chrome.tabs.sendMessage(currentTab.id, 'unactive');
+}); // bookmarkがupdateされたら更新する
+
+chrome.bookmarks.onCreated.addListener(function () {
+  getBookmarks();
+});
+chrome.bookmarks.onRemoved.addListener(function () {
+  getBookmarks();
+});
+chrome.bookmarks.onChanged.addListener(function () {
+  getBookmarks();
+});
+chrome.bookmarks.onImportEnded.addListener(function () {
+  getBookmarks();
+}); // historyが変更されたら更新
+
+chrome.history.onVisited.addListener(function () {
+  getHistory();
 });
 /**
  * tabs, bookmarks, historyを取得して、localstorageに保存
@@ -873,10 +938,10 @@ function getItems() {
       text: '',
       maxResults: 20
     }, function (history) {
-      items = utilities_1.deduplicate(items, history);
+      items = deduplicate(items, history);
       chrome.bookmarks.getTree(function (tree) {
         var bookmarks = utilities_1.treeToFlatList(tree[0]);
-        items = utilities_1.deduplicate(items, bookmarks);
+        items = deduplicate(items, bookmarks);
       });
     });
   });
@@ -890,15 +955,31 @@ function search(text) {
   var fuse = new Fuse(items, option);
   return fuse.search(text);
 }
+/** backgroundで管理するbookmarkを使ったsearch処理 */
+
+
+function search2(text) {
+  var items = deduplicate(tabs, history);
+  items = deduplicate(items, bookmarks);
+  var fuse = new Fuse(items, option);
+  return fuse.search(text);
+}
 /**
  * messageを受信
  */
 
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-  // 検索して結果を返信
+  // tabsを返信
+  if (message.tabs) {
+    sendResponse({
+      tabs: tabs
+    });
+  } // 検索して結果を返信
+
+
   if (message.searchWord) {
-    var result = search(message.searchWord);
+    var result = search2(message.searchWord);
     sendResponse({
       searchResult: result
     });
@@ -907,6 +988,9 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 /** 実行セクション */
 
 getItems();
+getTabs();
+getHistory();
+getBookmarks();
 },{"./utilities":"utilities.ts","fuse.js":"../node_modules/fuse.js/dist/fuse.js"}],"../node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -935,7 +1019,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "39797" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "38937" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
