@@ -96,18 +96,12 @@ export default class SuggestView extends HTMLElement {
    * show all tabs
    */
   public showAllTabs() {
-    chrome.runtime.sendMessage({tabs: true}, res => {
-      res.tabs.forEach( (tab, i) => {
-        const newHit = this.makeNewHit(tab)
+    chrome.runtime.sendMessage({defaultSuggests: true}, res => {
+      res.defaultSuggests.forEach( (item, i) => {
+        const newHit = this.makeNewHit(item)
         this.view.appendChild(newHit)
       })
     })
-    // chrome.tabs.query({}, tabs => {
-    //   tabs.forEach( (tab, i) => {
-    //     const newHit = this.makeNewHit(tab)
-    //     this.view.appendChild(newHit)
-    //   })
-    // })
   }
 
   /**

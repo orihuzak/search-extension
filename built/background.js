@@ -833,7 +833,18 @@ var Fuse = require("fuse.js");
 
 var log = console.log; // あとで消す
 
-var items, currentTab, tabs, history, bookmarks;
+var items, currentTab, tabs, history, bookmarks, tabsAndHistory;
+/** fuse option */
+
+var option = {
+  shouldSort: true,
+  includeScore: true,
+  includeMatches: true,
+  minMatchCharLength: 1,
+  threshold: 0.35,
+  maxPatternLength: 32,
+  keys: ['title', 'url']
+};
 
 function getTabs() {
   chrome.tabs.query({}, function (t) {
@@ -855,24 +866,17 @@ function getBookmarks() {
     bookmarks = utilities_1.treeToFlatList(tree[0]);
   });
 }
-/** fuse option */
 
-
-var option = {
-  shouldSort: true,
-  includeScore: true,
-  includeMatches: true,
-  minMatchCharLength: 1,
-  threshold: 0.35,
-  maxPatternLength: 32,
-  keys: ['title', 'url']
-};
+function getTabsAndHistory() {
+  tabsAndHistory = deduplicate(tabs, history);
+}
 /**
  * arrayの重複を排除する
  * @param {*} arr1 array of object
  * @param {*} arr2 array of object
  * arr1に重複を排除して追加する
  */
+
 
 function deduplicate(arr1, arr2) {
   arr2.forEach(function (item2) {
@@ -905,10 +909,16 @@ chrome.browserAction.onClicked.addListener(function (tab) {
 
 chrome.tabs.onUpdated.addListener(function () {
   getTabs();
+  getTabsAndHistory();
 }); // tabが切り替わったらextensionを非表示
 
 chrome.tabs.onActivated.addListener(function () {
   chrome.tabs.sendMessage(currentTab.id, 'unactive');
+}); // historyが変更されたら更新
+
+chrome.history.onVisited.addListener(function () {
+  getHistory();
+  getTabsAndHistory();
 }); // bookmarkがupdateされたら更新する
 
 chrome.bookmarks.onCreated.addListener(function () {
@@ -922,10 +932,6 @@ chrome.bookmarks.onChanged.addListener(function () {
 });
 chrome.bookmarks.onImportEnded.addListener(function () {
   getBookmarks();
-}); // historyが変更されたら更新
-
-chrome.history.onVisited.addListener(function () {
-  getHistory();
 });
 /**
  * tabs, bookmarks, historyを取得して、localstorageに保存
@@ -959,8 +965,7 @@ function search(text) {
 
 
 function search2(text) {
-  var items = deduplicate(tabs, history);
-  items = deduplicate(items, bookmarks);
+  var items = deduplicate(tabsAndHistory, bookmarks);
   var fuse = new Fuse(items, option);
   return fuse.search(text);
 }
@@ -971,9 +976,9 @@ function search2(text) {
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   // tabsを返信
-  if (message.tabs) {
+  if (message.defaultSuggests) {
     sendResponse({
-      tabs: tabs
+      defaultSuggests: tabsAndHistory
     });
   } // 検索して結果を返信
 
@@ -991,6 +996,7 @@ getItems();
 getTabs();
 getHistory();
 getBookmarks();
+getTabsAndHistory();
 },{"./utilities":"utilities.ts","fuse.js":"../node_modules/fuse.js/dist/fuse.js"}],"../node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -1019,7 +1025,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "38937" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "34431" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

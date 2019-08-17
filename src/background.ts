@@ -7,6 +7,18 @@ let items
   , tabs
   , history
   , bookmarks
+  , tabsAndHistory
+
+/** fuse option */
+const option = {
+  shouldSort: true,
+  includeScore: true,
+  includeMatches: true,
+  minMatchCharLength: 1,
+  threshold: 0.35, // 0に近ければより厳しい
+  maxPatternLength: 32,
+  keys: [ 'title', 'url' ],
+}
 
 function getTabs() {
   chrome.tabs.query({}, t => {
@@ -25,15 +37,8 @@ function getBookmarks() {
   })
 }
 
-/** fuse option */
-const option = {
-  shouldSort: true,
-  includeScore: true,
-  includeMatches: true,
-  minMatchCharLength: 1,
-  threshold: 0.35, // 0に近ければより厳しい
-  maxPatternLength: 32,
-  keys: [ 'title', 'url' ],
+function getTabsAndHistory() {
+  tabsAndHistory = deduplicate(tabs, history)
 }
 
 /**
@@ -71,11 +76,18 @@ chrome.browserAction.onClicked.addListener( tab => {
 // tabがアップデートされたらtabsを取得し直す
 chrome.tabs.onUpdated.addListener(() => {
   getTabs()
+ getTabsAndHistory()
 })
 
 // tabが切り替わったらextensionを非表示
 chrome.tabs.onActivated.addListener(() => {
   chrome.tabs.sendMessage(currentTab.id, 'unactive')
+})
+
+// historyが変更されたら更新
+chrome.history.onVisited.addListener(() => {
+  getHistory()
+  getTabsAndHistory()
 })
 
 // bookmarkがupdateされたら更新する
@@ -95,10 +107,6 @@ chrome.bookmarks.onImportEnded.addListener(() => {
   getBookmarks()
 })
 
-// historyが変更されたら更新
-chrome.history.onVisited.addListener(() => {
-  getHistory()
-})
 
 /**
  * tabs, bookmarks, historyを取得して、localstorageに保存
@@ -126,8 +134,7 @@ function search(text: string) {
 
 /** backgroundで管理するbookmarkを使ったsearch処理 */
 function search2(text: string){
-  let items = deduplicate(tabs, history)
-  items = deduplicate(items, bookmarks)
+  let items = deduplicate(tabsAndHistory, bookmarks)
   const fuse = new Fuse(items, option)
   return fuse.search(text)
 }
@@ -137,8 +144,8 @@ function search2(text: string){
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // tabsを返信
-  if (message.tabs) {
-    sendResponse({tabs: tabs})
+  if (message.defaultSuggests) {
+    sendResponse({defaultSuggests: tabsAndHistory})
   }
   // 検索して結果を返信
   if (message.searchWord) {
@@ -152,4 +159,4 @@ getItems()
 getTabs()
 getHistory()
 getBookmarks()
-
+getTabsAndHistory()
