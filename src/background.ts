@@ -1,8 +1,14 @@
-import { deduplicate, treeToFlatList } from './utilities'
+import { treeToFlatList } from './utilities'
 import Fuse = require('fuse.js')
 
+const log = console.log // あとで消す
 let items
-let currentTab
+  , currentTab
+  , tabs
+  , history
+  , bookmarks
+  , tabsAndHistory
+
 /** fuse option */
 const option = {
   shouldSort: true,
@@ -13,7 +19,50 @@ const option = {
   maxPatternLength: 32,
   keys: [ 'title', 'url' ],
 }
-const log = console.log // あとで消す
+
+function getTabs() {
+  chrome.tabs.query({}, t => {
+    tabs = t
+  })
+}
+
+function getHistory() {
+  chrome.history.search({ text: '', maxResults: 30 }, h => {
+    history = h
+  })
+}
+
+function getBookmarks() {
+  chrome.bookmarks.getTree(tree => {
+    bookmarks = treeToFlatList(tree[0])
+  })
+}
+
+function getTabsAndHistory() {
+  tabsAndHistory = deduplicate(tabs, history)
+}
+
+function getItems() {
+  items = deduplicate(tabsAndHistory, bookmarks)
+}
+
+/**
+ * array x, yの重複を排除した新しいarrayを返す
+ */
+function deduplicate(x, y) {
+  let result = [...x]
+  for(let yi of y) {
+    let flag = true
+    for(let xi of x) {
+      if(xi.url === yi.url) {
+        flag = false
+        continue
+      }
+    }
+    if (flag) result.push(yi)
+  }
+  return result
+}
 
 // extensionボタンが押されたらcontent scriptsにメッセージ
 chrome.browserAction.onClicked.addListener( tab => {
@@ -25,32 +74,50 @@ chrome.browserAction.onClicked.addListener( tab => {
   } else {
     chrome.tabs.sendMessage(tab.id, {})
   }
+  getTabsAndHistory()
+  getItems()
 })
 
+// tabがアップデートされたらtabsを取得し直す
+chrome.tabs.onUpdated.addListener(() => {
+  getTabs()
+})
+
+chrome.tabs.onRemoved.addListener(() => {
+  getTabs()
+})
+
+// tabが切り替わったらextensionを非表示
 chrome.tabs.onActivated.addListener(() => {
   chrome.tabs.sendMessage(currentTab.id, 'unactive')
 })
 
-/**
- * tabs, bookmarks, historyを取得して、localstorageに保存
- */
-function getItems() {
-  chrome.tabs.query({}, tabs => {
-    items = tabs
-    chrome.history.search({ text: '', maxResults: 20 }, history => {
-      items = deduplicate(items, history)
-      chrome.bookmarks.getTree(tree => {
-        const bookmarks = treeToFlatList(tree[0])
-        items = deduplicate(items, bookmarks)
-      })
-    })
-  })
-}
+// historyが変更されたら更新
+chrome.history.onVisited.addListener(() => {
+  getHistory()
+})
+
+// bookmarkがupdateされたら更新する
+chrome.bookmarks.onCreated.addListener(() => {
+  getBookmarks()
+})
+
+chrome.bookmarks.onRemoved.addListener(() => {
+  getBookmarks()
+})
+
+chrome.bookmarks.onChanged.addListener(() => {
+  getBookmarks()
+})
+
+chrome.bookmarks.onImportEnded.addListener(() => {
+  getBookmarks()
+})
 
 /**
  * 検索
  */
-function search(text: string) {
+function search(text: string){
   const fuse = new Fuse(items, option)
   return fuse.search(text)
 }
@@ -59,6 +126,10 @@ function search(text: string) {
  * messageを受信
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // tabsを返信
+  if (message.defaultSuggests) {
+    sendResponse({defaultSuggests: tabsAndHistory})
+  }
   // 検索して結果を返信
   if (message.searchWord) {
     const result = search(message.searchWord)
@@ -67,5 +138,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 })
 
 /** 実行セクション */
+// getItems()
+getTabs()
+getHistory()
+getBookmarks()
+getTabsAndHistory()
 getItems()
-
