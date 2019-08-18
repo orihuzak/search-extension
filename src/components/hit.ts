@@ -30,6 +30,9 @@ export default class Hit extends HTMLElement {
     // icon
     this.icon = document.createElement('img')
     this.icon.className = cssName.icon
+    this.icon.width = 20
+    this.icon.height = 20
+
     // data wrapper
     const dataWrapper = document.createElement('div')
     dataWrapper.className = cssName.data

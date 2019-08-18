@@ -142,5 +142,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 getTabs()
 getHistory()
 getBookmarks()
-getTabsAndHistory()
-getItems()
+// getTabsAndHistory()
+// getItems()
