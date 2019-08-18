@@ -4,8 +4,11 @@ const log = console.log
 const cssName = {
   card: 'card',
   cardFocued: 'card--focused',
+  icon: 'card__icon',
+  data: 'card__dataWrapper',
   title: 'card__title',
-  url: 'card__url'
+  url: 'card__url',
+  close: 'card__close'
 }
 
 export default class Hit extends HTMLElement {
@@ -26,15 +29,19 @@ export default class Hit extends HTMLElement {
     this.wrapper.className = cssName.card
     // icon
     this.icon = document.createElement('img')
+    this.icon.className = cssName.icon
     this.icon.width = 20
     this.icon.height = 20
+
+    // data wrapper
+    const dataWrapper = document.createElement('div')
+    dataWrapper.className = cssName.data
     // title
     this.name = document.createElement('div')
     this.name.className = cssName.title
     // url
     this.url = document.createElement('div')
-    const dataWrapper = document.createElement('div')
-    dataWrapper.className = 'card__data'
+    // data wrapperに追加
     dataWrapper.appendChild(this.name)
     dataWrapper.appendChild(this.url)
     // wrapperに追加
@@ -74,8 +81,8 @@ export default class Hit extends HTMLElement {
       this.icon.src = item.favIconUrl
       // closeボタンを追加
       const closeButton = document.createElement('button')
-      closeButton.className = 'card__close'
-      closeButton.innerText = `close` // close: <shortcut>にしたい
+      closeButton.className = cssName.close
+      closeButton.innerText = `×` // close: <shortcut>にしたい
       closeButton.addEventListener('click', this.closeTab.bind(this))
       this.wrapper.appendChild(closeButton)
     } else if (isHistoryItem(item)) {

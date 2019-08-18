@@ -1,7 +1,7 @@
 { 
   "name": "search tabs bookmarks history",
   "description": "search tabs bookmarks history",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "manifest_version": 2,
   "permissions": [
     "bookmarks",

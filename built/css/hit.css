@@ -22,19 +22,31 @@
   visibility: visible;
 }
 
+.card__icon {
+  margin-left: 5px;
+}
+
 .card__title {
-  font-size: 1.5em;
+  font-size: 1.4em;
+}
+
+.card__dataWrapper {
+  margin-left: 5px; 
 }
 
 .card__close {
   visibility: hidden;
   margin-left: auto;
-  background-color: #555555;
+  margin-right: 10px;
+  background-color: transparent;
   color: white;
   border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
 }
 
 .card__close:hover {
-  visibility: visible;
-  color: red
+  background-color: #dddddd; 
+  color: red;
 }
