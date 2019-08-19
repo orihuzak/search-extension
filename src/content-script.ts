@@ -4,6 +4,7 @@ frame.id = 'orih-frame'
 frame.src = chrome.extension.getURL('view.html')
 // frame.scrolling = 'no'
 
+// view以外の場所をクリックしたら、viewを消す
 document.body.onclick = (click: MouseEvent) => {
   if (document.getElementById('orih-frame')) {
     const rect = frame.getBoundingClientRect()
@@ -14,7 +15,7 @@ document.body.onclick = (click: MouseEvent) => {
   }
 }
 
-// この辺の処理はあとでなんとかしたい
+// viewの表示非表示を管理する
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (document.getElementById('orih-frame')){
     document.documentElement.removeChild(frame)
