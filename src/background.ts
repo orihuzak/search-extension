@@ -8,6 +8,7 @@ let items
   , history
   , bookmarks
   , tabsAndHistory
+  , fuse
 
 /** fuse option */
 const option = {
@@ -76,6 +77,7 @@ chrome.browserAction.onClicked.addListener( tab => {
   }
   getTabsAndHistory()
   getItems()
+  fuse = new Fuse(items, option)
 })
 
 // tabがアップデートされたらtabsを取得し直す
@@ -118,7 +120,6 @@ chrome.bookmarks.onImportEnded.addListener(() => {
  * 検索
  */
 function search(text: string){
-  const fuse = new Fuse(items, option)
   return fuse.search(text)
 }
 
@@ -138,9 +139,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 })
 
 /** 実行セクション */
-// getItems()
 getTabs()
 getHistory()
 getBookmarks()
-// getTabsAndHistory()
-// getItems()
