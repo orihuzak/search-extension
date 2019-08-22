@@ -110,6 +110,7 @@ export default class SuggestView extends HTMLElement {
    */
   public updateView(list: any[]) {
     list.forEach( (item, i) => {
+      // fuseはこちら fuseはitem.itemにする必要がある
       const newHit = this.makeNewHit(item.item)
       this.view.appendChild(newHit)
     })

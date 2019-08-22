@@ -11,7 +11,7 @@ let items
   , fuse
 
 /** fuse option */
-const option = {
+const FUSE_OPTION = {
   shouldSort: true,
   includeScore: true,
   includeMatches: true,
@@ -77,7 +77,7 @@ chrome.browserAction.onClicked.addListener( tab => {
   }
   getTabsAndHistory()
   getItems()
-  fuse = new Fuse(items, option)
+  fuse = new Fuse(items, FUSE_OPTION)
 })
 
 // tabがアップデートされたらtabsを取得し直す
@@ -120,6 +120,7 @@ chrome.bookmarks.onImportEnded.addListener(() => {
  * 検索
  */
 function search(text: string){
+  // fuseはこちら
   return fuse.search(text)
 }
 
