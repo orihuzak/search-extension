@@ -22,7 +22,6 @@ export default class SuggestView extends HTMLElement {
     // searchbox
     this.searchbox = document.createElement('input')
     this.searchbox.className = 'searchbox'
-    this.searchbox.autofocus = true
 
     /**
      * 検索ボックスに入力されたら検索する

@@ -361,7 +361,7 @@ class SuggestView extends HTMLElement {
         this.root.appendChild(style);
         // 描画時にやりたい処理
         window.onload = () => {
-            this.searchbox.focus();
+            // this.searchbox.focus()
             const rect = this.searchbox.getBoundingClientRect();
             this.view.style.paddingTop = rect.bottom + 'px';
             this.view.style.top = rect.bottom + 'px';
