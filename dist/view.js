@@ -305,7 +305,6 @@ class SuggestView extends HTMLElement {
         // searchbox
         this.searchbox = document.createElement('input');
         this.searchbox.className = 'searchbox';
-        this.searchbox.autofocus = true;
         /**
          * 検索ボックスに入力されたら検索する
          */
@@ -361,7 +360,7 @@ class SuggestView extends HTMLElement {
         this.root.appendChild(style);
         // 描画時にやりたい処理
         window.onload = () => {
-            // this.searchbox.focus()
+            this.searchbox.focus();
             const rect = this.searchbox.getBoundingClientRect();
             this.view.style.paddingTop = rect.bottom + 'px';
             this.view.style.top = rect.bottom + 'px';
