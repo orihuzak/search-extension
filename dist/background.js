@@ -195,7 +195,6 @@ chrome.tabs.onActivated.addListener(() => {
     if (currentTab) {
         chrome.tabs.sendMessage(currentTab.id, 'unactive');
     }
-    // chrome.tabs.sendMessage(activeInfo.tabId, 'unactive')
 });
 // historyが変更されたら更新
 chrome.history.onVisited.addListener(() => {
