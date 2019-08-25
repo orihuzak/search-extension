@@ -91,7 +91,10 @@ chrome.tabs.onRemoved.addListener(() => {
 
 // tabが切り替わったらextensionを非表示
 chrome.tabs.onActivated.addListener(() => {
-  chrome.tabs.sendMessage(currentTab.id, 'unactive')
+  if(currentTab) {
+    chrome.tabs.sendMessage(currentTab.id, 'unactive')
+  }
+  // chrome.tabs.sendMessage(activeInfo.tabId, 'unactive')
 })
 
 // historyが変更されたら更新
