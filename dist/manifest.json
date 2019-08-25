@@ -1,13 +1,13 @@
 { 
   "name": "search tabs bookmarks history",
   "description": "search tabs bookmarks history",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "manifest_version": 2,
   "permissions": [
-    "bookmarks",
-    "history",
+    "activeTab",
     "tabs",
-    "activeTab"
+    "history",
+    "bookmarks"
   ],
   "browser_action": {
     "default_icon": "./img/search.png"

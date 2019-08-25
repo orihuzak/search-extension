@@ -17,13 +17,12 @@ document.body.onclick = (click: MouseEvent) => {
 
 // viewの表示非表示を管理する
 chrome.runtime.onMessage.addListener((message, sender) => {
-  if (document.getElementById('orih-frame')){
+  if (message === 'unactive') {
+    document.documentElement.removeChild(frame)
+  } else if (document.getElementById('orih-frame')){
     document.documentElement.removeChild(frame)
   } else {
     document.documentElement.appendChild(frame)
-  }
-  if (message === 'unactive') {
-    document.documentElement.removeChild(frame)
   }
 })
 
