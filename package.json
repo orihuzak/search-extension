@@ -5,18 +5,18 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
-    "@types/chrome": "^0.0.86",
-    "@types/dom-inputevent": "^1.0.4",
-    "ts-loader": "^6.0.4",
-    "typescript": "^3.5.1",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7"
+    "@types/chrome": "0.x",
+    "@types/dom-inputevent": "1.x",
+    "ts-loader": "6.x",
+    "typescript": "3.x",
+    "webpack": "4.x",
+    "webpack-cli": "3.x"
   },
   "dependencies": {
-    "fuse.js": "^3.4.5"
+    "fuse.js": "3.x"
   },
   "scripts": {
-    "dev":  "webpack --watch --mode development --config webpack.config.js",
+    "dev": "webpack --watch --mode development --config webpack.config.js",
     "build": "webpack --mode production --config webpack.config.js",
     "zip": "zip -r search-tabs-bookmarks-history.zip dist/",
     "prepare": "yarn build && yarn zip"
