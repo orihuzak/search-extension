@@ -1,6 +1,6 @@
-FROM node:13-buster-slim
+FROM node:13-alpine
 WORKDIR /app
-RUN apt-get install zip && \
+RUN apk add zip && \
     yarn install
 # CMD ["yarn", "dev"]
-CMD [ "bash" ]
+CMD [ "sh" ]
