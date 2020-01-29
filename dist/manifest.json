@@ -1,6 +1,6 @@
 { 
-  "name": "search tabs bookmarks history",
-  "description": "search tabs bookmarks history",
+  "name": "searchrome",
+  "description": "search tabs, history and bookmarks",
   "version": "0.5.1",
   "manifest_version": 2,
   "permissions": [

@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "webpack --watch --mode development --config webpack.config.js",
     "build": "webpack --mode production --config webpack.config.js",
-    "zip": "zip -r search-tabs-bookmarks-history.zip dist/",
+    "zip": "zip -r searchrome.zip dist/",
     "prepare": "yarn build && yarn zip"
   }
 }
