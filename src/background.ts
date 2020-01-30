@@ -2,13 +2,18 @@ import { treeToFlatList } from './utilities'
 import Fuse = require('fuse.js')
 
 const log = console.log // あとで消す
-let items
-  , currentTab
-  , tabs
-  , history
-  , bookmarks
-  , tabsAndHistory
-  , fuse
+const NumOfHistory = 100 // 履歴の取得数
+
+let items: readonly unknown[]
+  , currentTab: chrome.tabs.Tab
+  , tabs: chrome.tabs.Tab[]
+  , history: chrome.history.HistoryItem[]
+  , bookmarks: chrome.bookmarks.BookmarkTreeNode[]
+  , tabsAndHistory: any[]
+  , fuse: string | Fuse<unknown, {
+      shouldSort: boolean; includeScore: boolean; includeMatches: boolean; minMatchCharLength: number; threshold: number // 0に近ければより厳しい
+        maxPatternLength: number; keys: string[]
+      }>
 
 /** fuse option */
 const FUSE_OPTION = {
@@ -28,7 +33,7 @@ function getTabs() {
 }
 
 function getHistory() {
-  chrome.history.search({ text: '', maxResults: 30 }, h => {
+  chrome.history.search({ text: '', maxResults: NumOfHistory }, h => {
     history = h
   })
 }
@@ -50,7 +55,7 @@ function getItems() {
 /**
  * array x, yの重複を排除した新しいarrayを返す
  */
-function deduplicate(x, y) {
+function deduplicate(x: chrome.tabs.Tab[], y: any) {
   let result = [...x]
   for(let yi of y) {
     let flag = true

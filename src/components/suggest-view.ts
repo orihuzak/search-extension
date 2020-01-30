@@ -30,6 +30,7 @@ export default class SuggestView extends HTMLElement {
       if (this.userInput !== this.searchbox.value) { // 入力によって値が変わった場合
         this.clear()
         if (this.searchbox.value === ''){ // 空ならタブを表示
+          window.clearTimeout(this.timerID)
           this.showAllTabs()
         } else {
           window.clearTimeout(this.timerID)
