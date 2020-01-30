@@ -118,6 +118,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = __webpack_require__(/*! ./utilities */ "./src/utilities.ts");
 const Fuse = __webpack_require__(/*! fuse.js */ "./node_modules/fuse.js/dist/fuse.js");
 const log = console.log; // あとで消す
+const NumOfHistory = 100; // 履歴の取得数
 let items, currentTab, tabs, history, bookmarks, tabsAndHistory, fuse;
 /** fuse option */
 const FUSE_OPTION = {
@@ -135,7 +136,7 @@ function getTabs() {
     });
 }
 function getHistory() {
-    chrome.history.search({ text: '', maxResults: 30 }, h => {
+    chrome.history.search({ text: '', maxResults: NumOfHistory }, h => {
         history = h;
     });
 }
