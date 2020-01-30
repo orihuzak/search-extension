@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "main": "view.ts",
   "license": "MIT",
   "private": true,
@@ -19,6 +19,6 @@
     "dev": "webpack --watch --mode development --config webpack.config.js",
     "build": "webpack --mode production --config webpack.config.js",
     "zip": "zip -r searchrome.zip dist/",
-    "prepare": "yarn build && yarn zip"
+    "prepare": "yarn build && yarn zip" 
   }
 }

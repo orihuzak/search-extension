@@ -1,7 +1,7 @@
 { 
   "name": "searchrome",
   "description": "search tabs, history and bookmarks",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "manifest_version": 2,
   "permissions": [
     "activeTab",

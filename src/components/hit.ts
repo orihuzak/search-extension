@@ -11,6 +11,12 @@ const cssName = {
   close: 'card__close'
 }
 
+function containsEncodedComponents(x) {
+  // ie ?,=,&,/ etc
+  return (decodeURI(x) !== decodeURIComponent(x));
+}
+
+
 export default class Hit extends HTMLElement {
   private shadow: ShadowRoot
   private itemID: number
@@ -74,7 +80,13 @@ export default class Hit extends HTMLElement {
     this.itemID = typeof item.id === 'string' ? parseInt(item.id) : item.id
     // hitに表示するものを設定
     this.name.innerText = item.title
-    this.url.innerText = decodeURI(item.url)
+    
+    try {
+      this.url.innerText = decodeURI(item.url)
+    } catch(err) {
+      this.url.innerText = item.url
+    }
+
     if (isTab(item)) {
       this.itemType = 'tab'
       // set icon
