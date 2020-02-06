@@ -1,11 +1,10 @@
 const path = require('path')
 
-module.exports = {
-  devtool: 'cheap-module-source-map', // chrome-extension用
+const config = {
   entry: {
     view: './src/view.ts',
-	 	background: './src/background.ts',
-	 	'content-script': './src/content-script.ts'
+    background: './src/background.ts',
+    'content-script': './src/content-script.ts'
   },
   output: {
     filename: '[name].js',
@@ -21,6 +20,19 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ]
+    extensions: ['.tsx', '.ts', '.js']
+  },
+  optimization: {
+    minimize: false // minifyしない
   }
+}
+
+module.exports = (env, argv) => {
+  if (argv.mode === 'development') {
+    // config.devtool = 'inline-source-map'
+    config.devtool = 'cheap-module-source-map' // chrome-extension用
+  } else if (argv.mode === 'production') {
+
+  }
+  return config
 }

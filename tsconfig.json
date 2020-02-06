@@ -1,16 +1,17 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "sourceMap": true,
+    // "sourceMap": true,
     "noImplicitAny": false,
     "allowJs": true,
     "module": "CommonJS",
     "target": "esnext",
+    "removeComments": true
   },
   "include":[
     "./src/**/*"
   ],
   "exclude": [
     "node_modules"
-  ]
+  ],
 }
