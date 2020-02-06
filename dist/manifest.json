@@ -1,7 +1,7 @@
 { 
   "name": "searchrome",
   "description": "fuzzy search tabs, history and bookmarks",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "manifest_version": 2,
   "permissions": [
     "activeTab",
@@ -13,13 +13,13 @@
     "default_icon": "./img/search.png"
   },
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["./js/background.js"]
   },
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
       "css": ["css/content-script.css"],
-      "js": ["content-script.js"]
+      "js": ["./js/content-script.js"]
     }
   ],
   "web_accessible_resources": [
